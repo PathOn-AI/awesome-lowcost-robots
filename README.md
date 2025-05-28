@@ -1,6 +1,6 @@
 # awesome-lerobot
 
-## Open-Source Hardware
+## 1. Open-Source Hardware
 
 | **Platform** | **Type** | **Description** | **Repository** |
 |--------------|----------|-----------------|----------------|
@@ -9,7 +9,7 @@
 | **XLeRobot** | Mobile Manipulator | Built on top of LeKiwi | https://github.com/Vector-Wangel/XLeRobot |
 | **Bambot** | Mobile Manipulator | Built on top of LeKiwi | https://github.com/timqian/bambot |
 
-## Policy Networks
+## 2. Policy Networks
 
 | **Policy** | **Full Name** | **Description** | **Paper** |
 |------------|---------------|-----------------|-----------|
