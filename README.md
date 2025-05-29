@@ -81,3 +81,33 @@ python lerobot/scripts/eval.py \
 ```
 
 ### 5.3 LIBERO
+
+
+## 5. Use LeRobot with so-arm100
+I first collect some data: https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2FDanqingZ%2Fso100_test_6%2Fepisode_1. And use the data to train ACT model from scratch with LeRobot.
+
+```
+python lerobot/scripts/train.py \
+  --dataset.repo_id=DanqingZ/so100_test_6 \
+  --policy.type=act \
+  --output_dir=outputs/train/act_so100_test \
+  --job_name=act_so100_test \
+  --policy.device=cuda \
+  --wandb.enable=true
+```
+I then use the trained the policy to control the robot, here's one successful run: https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2FDanqingZ%2Feval_act_so100_test%2Fepisode_4
+
+```
+python lerobot/scripts/control_robot.py \
+  --robot.type=so100 \
+  --control.type=record \
+  --control.fps=30 \
+  --control.single_task="Grasp a lego block and put it in the bin." \
+  --control.repo_id=DanqingZ/so100_test_6 \
+  --control.tags='["so100","tutorial"]' \
+  --control.warmup_time_s=5 \
+  --control.episode_time_s=15 \
+  --control.reset_time_s=5 \
+  --control.num_episodes=2 \
+  --control.push_to_hub=true
+```
