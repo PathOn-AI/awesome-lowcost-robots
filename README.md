@@ -35,6 +35,7 @@ https://github.com/DelinQu/awesome-vision-language-action-model
 * data operation
     * data set cleaning
     * data manipulation
+    * delete episode, combine dataset
 
 
 ## 5. Use LeRobot in simulated environment
