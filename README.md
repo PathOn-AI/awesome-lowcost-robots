@@ -31,6 +31,10 @@ https://github.com/DelinQu/awesome-vision-language-action-model
 
 ## 4. Dataset
 * data conversion: https://github.com/Tavish9/any4lerobot
+* data explorer
+* data operation
+    * data set cleaning
+    * data manipulation
 
 
 ## 5. Use LeRobot in simulated environment
