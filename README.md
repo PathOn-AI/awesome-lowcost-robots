@@ -11,6 +11,8 @@
 
 ## 2. Policy Networks
 
+### 2.1 Supported model types in LeRobot
+
 | **Policy** | **Full Name** | **Description** | **Paper** |
 |------------|---------------|-----------------|-----------|
 | **ACT** | Action Chunking with Transformers | Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware | https://arxiv.org/abs/2304.13705 |
@@ -20,6 +22,8 @@
 | **VQ-BeT** | Vector-Quantized Behavior Transformer | Behavior Generation with Latent Actions | https://arxiv.org/abs/2403.03181 |
 | **π0** | Pi-Zero | A Vision-Language-Action Flow Model for General Robot Control | https://www.physicalintelligence.company/download/pi0.pdf |
 
+### 2.2 VLA
+https://github.com/DelinQu/awesome-vision-language-action-model
 
 ## 3. Teleoperation
 * https://github.com/box2ai-robotics/joycon-robotics
