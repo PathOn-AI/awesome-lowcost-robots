@@ -81,6 +81,7 @@ python lerobot/scripts/eval.py \
 ```
 
 ### 5.3 LIBERO
+finetune pi0 with https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2FIPEC-COMMUNITY%2Flibero_object_no_noops_lerobot%2Fepisode_1
 
 
 ## 5. Use LeRobot with so-arm100
