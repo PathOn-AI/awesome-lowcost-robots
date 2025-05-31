@@ -25,3 +25,4 @@ Based on the judge.jsonl file, select episodes with a score of 2 and combine the
 ```bash
 python data_cleaning.py --repo_ids "DanqingZ/so100_test_pick_green_4,DanqingZ/so100_test_pick_green_5,DanqingZ/so100_test_pick_green_6,DanqingZ/so100_test_pick_grey_1,DanqingZ/so100_test_pick_grey_2" --judge_file "judge.jsonl" --hub_repo_id "DanqingZ/so100_filtered_pick_green_grey"
 ```
+Visualization of the consolidated dataset: https://huggingface.co/spaces/lerobot/visualize_dataset?path=%2FDanqingZ%2Fso100_filtered_pick_green_grey%2Fepisode_1
