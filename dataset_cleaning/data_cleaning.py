@@ -16,6 +16,10 @@ import datasets
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 from tqdm import tqdm
+import os
+import re
+import glob
+import pandas as pd
 from lerobot.common.datasets.utils import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_PARQUET_PATH,
@@ -321,6 +325,87 @@ def generate_dataset(judge_jsonl_path, repo_ids):
         print("⚠️  Dataset validation found some issues, but files were created")
         return False, dataset_root
 
+def update_task_index(dataset_root):
+    # meta/episodes.jsonl, not need to update
+    # output_dir = Path("./filtered_dataset")
+    # dataset_name = "so100_filtered_pick_green"
+    # dataset_root = output_dir / dataset_name
+    print(dataset_root)
+    episodes_path = dataset_root / "meta" / "episodes.jsonl"
+    print(episodes_path)
+    all_tasks = []
+    with open(episodes_path, 'r') as f:
+        for line in f:
+            episode = json.loads(line.strip())
+            all_tasks.extend(episode['tasks'])
+
+    # Create unique task list
+    unique_tasks = list(dict.fromkeys(all_tasks))
+
+    # Create mappings
+    task_to_id = {task: i for i, task in enumerate(unique_tasks)}
+    id_to_task = {i: task for i, task in enumerate(unique_tasks)}
+    print(task_to_id, id_to_task)
+
+    tasks_path = dataset_root / "meta" / "tasks.jsonl"
+    with open(tasks_path, 'w') as f:
+        for k, v in task_to_id.items():
+            f.write(json.dumps({"task_index": v, "task": k}) + '\n')
+
+    episodes_task_mapping = {}
+    with open(episodes_path, 'r') as f:
+        for line in f:
+            episode = json.loads(line.strip())
+            episode_id = episode['episode_index']
+            task = episode['tasks'][0]
+            episodes_task_mapping[episode_id] = task_to_id[task]
+    print(episodes_task_mapping)
+
+    updated_episodes = []
+    episodes_stats_path = dataset_root / "meta" / "episodes_stats.jsonl"
+    with open(episodes_stats_path, 'r') as f:
+        for line in f:
+            episode_stats = json.loads(line.strip())
+            episode_id = episode_stats['episode_index']
+            
+            print(episode_id)
+            print(episodes_task_mapping[episode_id])
+            print(episode_stats['stats']['task_index'])
+            
+            # Update the task_index stats with the mapped task value
+            mapped_task = episodes_task_mapping[episode_id]
+            episode_stats['stats']['task_index']['min'] = [mapped_task]
+            episode_stats['stats']['task_index']['max'] = [mapped_task]
+            episode_stats['stats']['task_index']['mean'] = [float(mapped_task)]  # Ensure it's a float for mean
+            
+            print(episode_stats['stats']['task_index'])
+            
+            # Add the modified episode to our list
+            updated_episodes.append(episode_stats)
+
+    # Write the updated data back to the file
+    with open(episodes_stats_path, 'w') as f:
+        for episode_stats in updated_episodes:
+            json_line = json.dumps(episode_stats)
+            f.write(json_line + '\n')
+
+    data_folder = dataset_root / "data"
+    parquet_files = glob.glob(os.path.join(data_folder, "**/*.parquet"), recursive=True)
+
+    print("All parquet files:")
+    for file in parquet_files:
+        print(file)
+        episode_match = re.search(r'episode_(\d+)', file)
+        if episode_match:
+            episode_id = episode_match.group(1)
+            episode_id = int(episode_id)
+            print(f"Episode ID: {episode_id}")
+            print(episodes_task_mapping[episode_id])
+            # update the task_index in the parquet file
+            df = pd.read_parquet(file)
+            df['task_index'] = episodes_task_mapping[episode_id]
+            df.to_parquet(file, index=False)
+
 def main():
     """Main execution function"""
     # Parse command line arguments
@@ -382,11 +467,12 @@ def main():
 
     # Step 4: Create filtered dataset
     success, dataset_root = generate_dataset(judge_jsonl_path=judge_jsonl, repo_ids=repo_ids)
-    
     if not success and dataset_root is None:
         print("Failed to create dataset")
         return
-    
+
+    update_task_index(dataset_root)
+
     # Automatically push to Hugging Face Hub with default settings
     hub_repo_id = args.hub_repo_id
     print(f"Dataset root: {dataset_root}")  
