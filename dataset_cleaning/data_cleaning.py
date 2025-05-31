@@ -326,10 +326,6 @@ def generate_dataset(judge_jsonl_path, repo_ids):
         return False, dataset_root
 
 def update_task_index(dataset_root):
-    # meta/episodes.jsonl, not need to update
-    # output_dir = Path("./filtered_dataset")
-    # dataset_name = "so100_filtered_pick_green"
-    # dataset_root = output_dir / dataset_name
     print(dataset_root)
     episodes_path = dataset_root / "meta" / "episodes.jsonl"
     print(episodes_path)
