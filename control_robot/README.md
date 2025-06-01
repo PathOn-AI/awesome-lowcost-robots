@@ -4,7 +4,13 @@ Control the SO-ARM100 robotic arm in both physical and simulation environments.
 
 ## 🤖 1. Physical Robot Control
 
-**Hardware**: SO-ARM100 by Feetech
+We use the robot device config and control scripts from LeRobot to control the SO-Arm100 follower arm with one Python script.
+
+**Quick Start:**
+```bash
+conda activate lerobot
+python test_robot.py
+```
 
 **TODO:**
 - [ ] Keyboard control implementation
@@ -17,6 +23,7 @@ Control the SO-ARM100 robotic arm in both physical and simulation environments.
 
 **Quick Start:**
 ```bash
+conda activate lerobot
 pip install mujoco
 mjpython script.py --control threaded_input
 ```
@@ -32,8 +39,7 @@ mjpython script.py --control threaded_input
 
 ### 2.2 Genesis (In Development)
 
-Integration with LeRobot ecosystem coming soon.
-
+Integration with the LeRobot ecosystem is coming soon.
 
 ### 2.3 Maniskill (In Development)
 
