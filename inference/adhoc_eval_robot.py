@@ -8,12 +8,11 @@ from lerobot.common.policies.act.modeling_act import ACTPolicy
 from lerobot.common.robot_devices.utils import busy_wait
 from lerobot.common.robot_devices.robots.utils import make_robot
 
+# reference: https://github.com/alexis779/slobot/blob/main/modal/lerobot/eval_policy.py
 
 inference_time_s = 30
 fps = 25
 device = "mps" 
-
-# ckpt_path = "/home/alexis/Documents/python/robotics/so100_ball_cup_act"
 policy = ACTPolicy.from_pretrained("DanqingZ/act_so100_filtered_yellow_cuboid")
 policy.to(device)
 
@@ -37,12 +36,8 @@ for step in range(inference_time_s * fps):
         observation[name] = observation[name].to(device)
         print(name, observation[name].shape)
 
-    # Compute the next action with the policy
-    # based on the current observation
     action = policy.select_action(observation)
-    # Remove batch dimension
     action = action.squeeze(0)
-    # Move to cpu, if not already the case
     action = action.to("cpu")
     print(action)
 
