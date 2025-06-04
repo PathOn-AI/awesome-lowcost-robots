@@ -1,3 +1,4 @@
+.cache/
 outputs/
 .DS_Store
 filtered_dataset/
