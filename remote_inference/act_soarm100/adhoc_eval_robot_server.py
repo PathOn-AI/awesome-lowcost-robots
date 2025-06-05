@@ -17,7 +17,7 @@ from datetime import datetime
 # Rate limiting configurations
 CONSERVATIVE_CONFIG = {
     'strategy': 'exponential_backoff',
-    'initial_delay': 0.5,  # 500ms base delay - very conservative for ngrok
+    'initial_delay': 0.01,  # 500ms base delay - very conservative for ngrok
     'max_delay': 60.0,     # Allow up to 1 minute delays
     'backoff_factor': 2.0,
     'max_retries': 15      # Even more retries for rate limits
@@ -140,7 +140,7 @@ async def run_inference():
     # Initialize rate limiting handler
     rate_limit_config = DEFAULT_RATE_LIMIT_CONFIG.copy()
     rate_handler = AsyncRateLimitHandler(
-        initial_delay=rate_limit_config.get('initial_delay', 0.1),
+        initial_delay=rate_limit_config.get('initial_delay', 0.01),
         max_delay=rate_limit_config.get('max_delay', 60.0),
         backoff_factor=rate_limit_config.get('backoff_factor', 2.0),
         max_retries=rate_limit_config.get('max_retries', 15)
