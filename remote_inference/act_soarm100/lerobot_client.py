@@ -17,7 +17,7 @@ class LeRobotClientError(Exception):
 
 class LeRobotClient:
     def __init__(self, uri: str, max_message_size: int = 100 * 1024 * 1024, timeout: float = 30.0):
-        self.uri = "ws://localhost:8766" if uri is None else uri
+        self.uri = "ws://localhost:8765" if uri is None else uri
         self.max_message_size = max_message_size
         self.timeout = timeout
         self._websocket: Optional[websockets.WebSocketServerProtocol] = None
