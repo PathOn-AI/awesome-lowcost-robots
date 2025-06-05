@@ -1,5 +1,6 @@
 import time
 import logging
+import asyncio
 
 import torch
 import cv2
@@ -9,7 +10,7 @@ import os
 from lerobot.common.policies.act.modeling_act import ACTPolicy
 from lerobot.common.robot_devices.utils import busy_wait
 from lerobot.common.robot_devices.robots.utils import make_robot
-from lerobot_client import SyncLeRobotClient
+from lerobot_client import LeRobotClient
 from datetime import datetime
 
 
@@ -39,8 +40,8 @@ SIMPLE_CONFIG = {
 DEFAULT_RATE_LIMIT_CONFIG = CONSERVATIVE_CONFIG
 
 
-class RateLimitHandler:
-    """Handles rate limiting with exponential backoff and retry logic."""
+class AsyncRateLimitHandler:
+    """Handles rate limiting with exponential backoff and retry logic for async operations."""
     
     def __init__(self, 
                  initial_delay: float = 0.1, 
@@ -52,16 +53,16 @@ class RateLimitHandler:
         self.backoff_factor = backoff_factor
         self.max_retries = max_retries
         
-    def execute_with_backoff(self, func, *args, **kwargs):
-        """Execute function with exponential backoff on rate limit errors."""
+    async def execute_with_backoff(self, func, *args, **kwargs):
+        """Execute async function with exponential backoff on rate limit errors."""
         delay = self.initial_delay
         
         for attempt in range(self.max_retries):
             try:
                 # Always add a small delay before each request
                 if attempt == 0:
-                    time.sleep(self.initial_delay)
-                return func(*args, **kwargs)
+                    await asyncio.sleep(self.initial_delay)
+                return await func(*args, **kwargs)
             except Exception as e:
                 # Use the enhanced rate limit detection
                 if is_rate_limit_error(e):
@@ -69,9 +70,9 @@ class RateLimitHandler:
                         logging.error(f"Max retries ({self.max_retries}) exceeded for rate limiting")
                         # Instead of raising, wait for full reset and try once more
                         logging.info("Waiting 60 seconds for rate limit to fully reset...")
-                        time.sleep(60)
+                        await asyncio.sleep(60)
                         try:
-                            return func(*args, **kwargs)
+                            return await func(*args, **kwargs)
                         except Exception as final_e:
                             logging.error(f"Final attempt failed: {final_e}")
                             raise e
@@ -83,7 +84,7 @@ class RateLimitHandler:
                     else:
                         logging.warning(f"Rate limit hit (attempt {attempt + 1}/{self.max_retries}), waiting {delay:.2f}s before retry")
                     
-                    time.sleep(delay)
+                    await asyncio.sleep(delay)
                     delay = min(delay * self.backoff_factor, self.max_delay)
                 else:
                     # Not a rate limit error, re-raise immediately
@@ -129,109 +130,109 @@ def is_rate_limit_error(exception) -> bool:
     return is_standard_rate_limit or is_websocket_rate_limit
 
 
-# Configuration
-inference_time_s = 30
-fps = 25
-device = "mps" 
+async def run_inference():
+    """Main async inference function."""
+    # Configuration
+    inference_time_s = 30
+    fps = 25
+    device = "mps" 
 
-# Initialize rate limiting handler
-rate_limit_config = DEFAULT_RATE_LIMIT_CONFIG.copy()
-rate_handler = RateLimitHandler(
-    initial_delay=rate_limit_config.get('initial_delay', 0.5),
-    max_delay=rate_limit_config.get('max_delay', 60.0),
-    backoff_factor=rate_limit_config.get('backoff_factor', 2.0),
-    max_retries=rate_limit_config.get('max_retries', 15)
-)
+    # Initialize rate limiting handler
+    rate_limit_config = DEFAULT_RATE_LIMIT_CONFIG.copy()
+    rate_handler = AsyncRateLimitHandler(
+        initial_delay=rate_limit_config.get('initial_delay', 0.1),
+        max_delay=rate_limit_config.get('max_delay', 60.0),
+        backoff_factor=rate_limit_config.get('backoff_factor', 2.0),
+        max_retries=rate_limit_config.get('max_retries', 15)
+    )
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logging.info(f"Using rate limiting strategy: {rate_limit_config['strategy']} with config: {rate_limit_config}")
+    # Setup logging
+    logging.basicConfig(level=logging.INFO)
+    logging.info(f"Using rate limiting strategy: {rate_limit_config['strategy']} with config: {rate_limit_config}")
 
-# Initialize policy and robot
-policy = ACTPolicy.from_pretrained("DanqingZ/act_so100_filtered_yellow_cuboid")
-policy.to(device)
+    # Initialize policy and robot
+    policy = ACTPolicy.from_pretrained("DanqingZ/act_so100_filtered_yellow_cuboid")
+    policy.to(device)
 
-robot = make_robot("so100")
-robot.connect()
-output_dir = "/Users/danqingzhang/Desktop/learning/awesome-lerobot/inference/act_soarm100/images/"
-os.makedirs(output_dir, exist_ok=True)
+    robot = make_robot("so100")
+    robot.connect()
+    output_dir = "/Users/danqingzhang/Desktop/learning/awesome-lerobot/inference/act_soarm100/images/"
+    os.makedirs(output_dir, exist_ok=True)
 
-# Initialize client connection ONCE outside the loop
-client = SyncLeRobotClient()
-client.connect()
-logging.info("✅ LeRobot client connected and ready")
-
-try:
-    # Main inference loop
-    for step in range(inference_time_s * fps):
-        print('Iteration Start Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
-        start_time = time.perf_counter()
-        observation = robot.capture_observation()
-        
-        # Save images
-        image = observation['observation.images.phone']
-        np_image = np.array(image)
-        np_image = cv2.cvtColor(np_image, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(os.path.join(output_dir, f"image_phone_{step}.jpg"), np_image)
-        
-        image = observation['observation.images.on_robot']
-        np_image = np.array(image)
-        np_image = cv2.cvtColor(np_image, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(os.path.join(output_dir, f"image_on_robot_{step}.jpg"), np_image)
-        
-        print(f"Step {step}")
-        
-        # Process observation
-        for name in observation:
-            # if "image" in name:
-            #     observation[name] = observation[name].type(torch.float16) / 255
-            #     observation[name] = observation[name].permute(2, 0, 1).contiguous()
-            # observation[name] = observation[name].unsqueeze(0)
-            observation[name] = observation[name].numpy()
-            print(name, observation[name].shape)
-
-        # Get action with rate limiting (reusing existing connection)
-        def get_action():
-            return client.select_action(observation)
+    # Use async context manager for LeRobotClient
+    async with LeRobotClient("ws://localhost:8766") as client:
+        logging.info("✅ LeRobot client connected and ready")
         
         try:
-            action = rate_handler.execute_with_backoff(get_action)
-            action = torch.from_numpy(action)
-            action = action.squeeze(0)
-            robot.send_action(action)
-            
-        except Exception as e:
-            logging.error(f"Failed to get action at step {step}: {e}")
-            
-            # Try to reconnect if it seems like a connection error
-            error_str = str(e).lower()
-            if any(keyword in error_str for keyword in ["connection", "websocket", "disconnected"]):
-                logging.info("Attempting to reconnect client...")
+            # Main inference loop
+            for step in range(inference_time_s * fps):
+                print('Iteration Start Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
+                start_time = time.perf_counter()
+                observation = robot.capture_observation()
+                
+                # Save images
+                image = observation['observation.images.phone']
+                np_image = np.array(image)
+                np_image = cv2.cvtColor(np_image, cv2.COLOR_RGB2BGR)
+                cv2.imwrite(os.path.join(output_dir, f"image_phone_{step}.jpg"), np_image)
+                
+                image = observation['observation.images.on_robot']
+                np_image = np.array(image)
+                np_image = cv2.cvtColor(np_image, cv2.COLOR_RGB2BGR)
+                cv2.imwrite(os.path.join(output_dir, f"image_on_robot_{step}.jpg"), np_image)
+                
+                print(f"Step {step}")
+                
+                # Process observation
+                for name in observation:
+                    # if "image" in name:
+                    #     observation[name] = observation[name].type(torch.float16) / 255
+                    #     observation[name] = observation[name].permute(2, 0, 1).contiguous()
+                    # observation[name] = observation[name].unsqueeze(0)
+                    observation[name] = observation[name].numpy()
+                    print(name, observation[name].shape)
+
+                # Get action with rate limiting (using async client)
+                async def get_action():
+                    return await client.select_action(observation)
+                
+                print('Done processing observation:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
                 try:
-                    client.disconnect()
-                    time.sleep(1)  # Brief pause before reconnecting
-                    client.connect()
-                    logging.info("✅ Client reconnected successfully")
-                except Exception as reconnect_error:
-                    logging.error(f"Failed to reconnect: {reconnect_error}")
-            
-            # Skip this step and continue
-            continue
+                    action = await rate_handler.execute_with_backoff(get_action)
+                    print('Get Action Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
+                    action = torch.from_numpy(action)
+                    action = action.squeeze(0)
+                    print('Action Conversion Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
+                    robot.send_action(action)
+                    print('Robot Send Action Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
+                    
+                except Exception as e:
+                    logging.error(f"Failed to get action at step {step}: {e}")
+                    # Skip this step and continue (client connection managed by context manager)
+                    continue
 
-        dt_s = time.perf_counter() - start_time
-        busy_wait(1 / fps - dt_s)
+                dt_s = time.perf_counter() - start_time
+                busy_wait(1 / fps - dt_s)
 
-finally:
-    # Clean up connections
-    logging.info("Cleaning up connections...")
+        finally:
+            # Robot cleanup (client cleanup handled by context manager)
+            try:
+                robot.disconnect()
+                logging.info("✅ Robot disconnected")
+            except Exception as e:
+                logging.warning(f"Error during robot cleanup: {e}")
+
+
+def main():
+    """Entry point that runs the async inference."""
     try:
-        client.disconnect()
-        logging.info("✅ LeRobot client disconnected")
+        asyncio.run(run_inference())
+    except KeyboardInterrupt:
+        logging.info("Inference interrupted by user")
     except Exception as e:
-        logging.warning(f"Error during client cleanup: {e}")
-    
-    try:
-        robot.disconnect()
-        logging.info("✅ Robot disconnected")
-    except Exception as e:
-        logging.warning(f"Error during robot cleanup: {e}")
+        logging.error(f"Inference failed: {e}")
+        raise
+
+
+if __name__ == "__main__":
+    main()
