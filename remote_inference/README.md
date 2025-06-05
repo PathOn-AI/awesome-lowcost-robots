@@ -16,7 +16,7 @@ then
 cd act_soarm100
 ```
 
-## Run Inference on the Server
+### Run Inference on the Server
 
 On the server, run:
 ```
@@ -33,3 +33,7 @@ python adhoc_eval_robot_server.py
 ```
 
 TODO: Need to speed up the inference. Use MessagePack instead of JSON + Pickle.
+
+
+## 2. Eval pi0
+![Video Description](on_robot.mp4) 
