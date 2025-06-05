@@ -3,12 +3,14 @@
 import asyncio
 import logging
 import numpy as np
+from time import time
 import torch
 import websockets
 from websockets.server import WebSocketServerProtocol
 from lerobot.common.policies.pretrained import PreTrainedPolicy
 from lerobot.common.policies.act.modeling_act import ACTPolicy
 from msgpack_utils import packb, unpackb
+from datetime import datetime
 
 
 def convert_observation(observation, device):
@@ -16,6 +18,10 @@ def convert_observation(observation, device):
     for key, value in observation.items():
         if isinstance(value, np.ndarray):
             value = torch.from_numpy(value)
+            if "image" in key:
+                value = value.type(torch.float16) / 255
+                value = value.permute(2, 0, 1).contiguous()
+            value = value.unsqueeze(0)
         flat_observation[key] = value
     return flat_observation
 
@@ -32,20 +38,43 @@ class PolicyWebSocketServer:
         logging.info(f"Client connected from {websocket.remote_address}")
         
         async for message in websocket:
+            start_time = time()
+            print('Receive Message Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
             data = unpackb(message)
+            end_time = time()
+            duration = end_time - start_time
+            duration_ms = duration * 1000
+            print(f"Time taken to unpack message: {duration_ms} ms")
                 
             if data.get("type") == "select_action":
+                start_time = time()
                 observation = data["observation"]
                 observation = convert_observation(observation, device=self.device)
                 observation = self._move_observation_to_device(observation)
+                print('Process Observation Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
+                end_time = time()
+                duration = end_time - start_time
+                duration_ms = duration * 1000
+                # print(f"Time taken to convert observation: {duration_ms} ms")
+                start_time = time()
 
                 with torch.inference_mode():
                     action = self.policy.select_action(observation)
+                print('Inference Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
+                end_time = time()
+                duration = end_time - start_time
+                duration_ms = duration * 1000
+                print(f"Time taken to select action: {duration_ms} ms")
 
+                start_time = time()
                 response = {
                     "type": "action_response",
                     "action": action.cpu().numpy()
                 }
+                end_time = time()
+                duration = end_time - start_time
+                duration_ms = duration * 1000
+                print(f"Time taken to send response: {duration_ms} ms")
                 
                 await websocket.send(packb(response))
                 

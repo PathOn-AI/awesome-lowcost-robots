@@ -10,6 +10,7 @@ from lerobot.common.policies.act.modeling_act import ACTPolicy
 from lerobot.common.robot_devices.utils import busy_wait
 from lerobot.common.robot_devices.robots.utils import make_robot
 from lerobot_client import SyncLeRobotClient
+from datetime import datetime
 
 
 # Rate limiting configurations
@@ -163,6 +164,7 @@ logging.info("✅ LeRobot client connected and ready")
 try:
     # Main inference loop
     for step in range(inference_time_s * fps):
+        print('Iteration Start Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
         start_time = time.perf_counter()
         observation = robot.capture_observation()
         
@@ -181,10 +183,10 @@ try:
         
         # Process observation
         for name in observation:
-            if "image" in name:
-                observation[name] = observation[name].type(torch.float32) / 255
-                observation[name] = observation[name].permute(2, 0, 1).contiguous()
-            observation[name] = observation[name].unsqueeze(0)
+            # if "image" in name:
+            #     observation[name] = observation[name].type(torch.float16) / 255
+            #     observation[name] = observation[name].permute(2, 0, 1).contiguous()
+            # observation[name] = observation[name].unsqueeze(0)
             observation[name] = observation[name].numpy()
             print(name, observation[name].shape)
 
