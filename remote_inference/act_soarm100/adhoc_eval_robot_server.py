@@ -159,6 +159,12 @@ async def run_inference():
     output_dir = "/Users/danqingzhang/Desktop/learning/awesome-lerobot/inference/act_soarm100/images/"
     os.makedirs(output_dir, exist_ok=True)
 
+    # Performance tracking variables
+    iteration_times = []
+    running_total_time = 0.0
+    successful_steps = 0
+    start_overall = time.perf_counter()
+
     # Use async context manager for LeRobotClient
     async with LeRobotClient("ws://localhost:8766") as client:
         logging.info("✅ LeRobot client connected and ready")
@@ -185,10 +191,6 @@ async def run_inference():
                 
                 # Process observation
                 for name in observation:
-                    # if "image" in name:
-                    #     observation[name] = observation[name].type(torch.float16) / 255
-                    #     observation[name] = observation[name].permute(2, 0, 1).contiguous()
-                    # observation[name] = observation[name].unsqueeze(0)
                     observation[name] = observation[name].numpy()
                     print(name, observation[name].shape)
 
@@ -206,15 +208,74 @@ async def run_inference():
                     robot.send_action(action)
                     print('Robot Send Action Time:', datetime.now().strftime("%A, %B %d, %Y at %H:%M:%S.%f")[:-3])
                     
+                    # Calculate iteration performance
+                    iteration_time = time.perf_counter() - start_time
+                    iteration_ms = iteration_time * 1000
+                    
+                    # Update running averages
+                    successful_steps += 1
+                    running_total_time += iteration_time
+                    iteration_times.append(iteration_time)
+                    
+                    # Calculate running averages
+                    running_avg_ms = (running_total_time / successful_steps) * 1000
+                    running_avg_fps = 1.0 / (running_total_time / successful_steps)
+                    
+                    # Calculate overall performance since start
+                    elapsed_overall = time.perf_counter() - start_overall
+                    overall_fps = successful_steps / elapsed_overall
+                    
+                    # Print performance stats
+                    print(f"📊 Step {step}: {iteration_ms:.1f}ms | "
+                          f"Avg: {running_avg_ms:.1f}ms ({running_avg_fps:.1f} FPS) | "
+                          f"Overall: {overall_fps:.1f} FPS | "
+                          f"Success: {successful_steps}/{step+1}")
+                    
                 except Exception as e:
                     logging.error(f"Failed to get action at step {step}: {e}")
-                    # Skip this step and continue (client connection managed by context manager)
+                    # Print failure stats
+                    elapsed_overall = time.perf_counter() - start_overall
+                    overall_fps = successful_steps / elapsed_overall if successful_steps > 0 else 0
+                    print(f"❌ Step {step}: FAILED | "
+                          f"Overall: {overall_fps:.1f} FPS | "
+                          f"Success: {successful_steps}/{step+1}")
                     continue
 
                 dt_s = time.perf_counter() - start_time
                 busy_wait(1 / fps - dt_s)
 
         finally:
+            # Print final performance summary
+            total_elapsed = time.perf_counter() - start_overall
+            
+            print("\n" + "="*60)
+            print("📈 FINAL PERFORMANCE SUMMARY")
+            print("="*60)
+            
+            if successful_steps > 0:
+                final_avg_ms = (running_total_time / successful_steps) * 1000
+                final_avg_fps = 1.0 / (running_total_time / successful_steps)
+                overall_fps = successful_steps / total_elapsed
+                success_rate = (successful_steps / (inference_time_s * fps)) * 100
+                
+                print(f"Total steps attempted: {inference_time_s * fps}")
+                print(f"Successful steps: {successful_steps}")
+                print(f"Success rate: {success_rate:.1f}%")
+                print(f"Average iteration time: {final_avg_ms:.1f}ms")
+                print(f"Average processing FPS: {final_avg_fps:.1f}")
+                print(f"Overall throughput FPS: {overall_fps:.1f}")
+                print(f"Total runtime: {total_elapsed:.1f}s")
+                
+                # Additional stats if you want them
+                if len(iteration_times) > 1:
+                    import statistics
+                    median_ms = statistics.median(iteration_times) * 1000
+                    print(f"Median iteration time: {median_ms:.1f}ms")
+            else:
+                print("❌ No successful iterations completed")
+            
+            print("="*60)
+            
             # Robot cleanup (client cleanup handled by context manager)
             try:
                 robot.disconnect()
