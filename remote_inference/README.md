@@ -36,4 +36,4 @@ TODO: Need to speed up the inference. Use MessagePack instead of JSON + Pickle.
 
 
 ## 2. Eval pi0
-[![Watch the video](https://img.youtube.com/vi/Fuf9Kqy5tpk/hqdefault.jpg)](https://www.youtube.com/watch?v=Fuf9Kqy5tpk)
+[![Watch the video](https://img.youtube.com/vi/Fuf9Kqy5tpk/maxresdefault.jpg)](https://www.youtube.com/embed/Fuf9Kqy5tpk)
