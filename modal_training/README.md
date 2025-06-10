@@ -91,13 +91,19 @@ python lerobot/scripts/train.py \
 
 ### 5.2 Production Fine-tuning
 
-For a complete fine-tuning run on So-Arm100 data:
+For a complete fine-tuning of pi0 on So-Arm100 data:
 
 ```bash
 modal run -d lerobot_finetune.py --dataset-repo-id="DanqingZ/filtered_pick_yellow_pink" --model-id="lerobot/pi0" --gpu-type="H100" --policy-name="pi0_pick_yellow_pink" --save-freq=200000 --log-freq=100
 ```
-
 **Cost estimate:** ~$50 for 100k steps on H100
+
+For a complete fine-tuning of smolvla on So-Arm100 data:
+```bash
+modal run -d lerobot_finetune.py --dataset-repo-id="DanqingZ/filtered_pick_yellow_pink" --model-id="lerobot/smolvla_base" --gpu-type="H100" --policy-name="pi0_pick_yellow_pink" --save-freq=200000 --log-freq=100 --batch-size=64 --steps=20000
+```
+
+
 
 ### 5.3 Training from Scratch
 

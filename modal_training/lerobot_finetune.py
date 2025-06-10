@@ -1,7 +1,7 @@
 import modal
 import os
 
-app = modal.App("lerobot-example")
+app = modal.App("lerobot-finetune-app")
 
 # Create image with Python 3.10, ffmpeg, and LeRobot
 image = (
@@ -12,6 +12,7 @@ image = (
     .run_commands(
         "git clone https://github.com/huggingface/lerobot.git /lerobot",
         'cd /lerobot && pip install -e ".[pi0]"',
+        'cd /lerobot && pip install -e ".[smolvla]"',
         "pip uninstall -y transformers",
         "pip install transformers==4.51.3",
         "pip install wandb pytest"
@@ -92,17 +93,17 @@ def test_lerobot_setup():
         print("❌ FFmpeg not found")
 
 @app.function(gpu="H100", image=image, secrets=[modal.Secret.from_name("wandb-secret"), modal.Secret.from_name("hf-secret"), modal.Secret.from_name("hf-name-secret")], timeout=86400)
-def run_lerobot_h100(dataset_repo_id, model_id, policy_name=None, save_freq=200000, log_freq=100, steps=None, policy_type=False):
+def run_lerobot_h100(dataset_repo_id, model_id, policy_name=None, save_freq=200000, log_freq=100, steps=None, policy_type=False, batch_size=None):
     """Run LeRobot training on H100"""
-    return _run_lerobot_training("H100", dataset_repo_id, model_id, policy_name, save_freq, log_freq, steps, policy_type)
+    return _run_lerobot_training("H100", dataset_repo_id, model_id, policy_name, save_freq, log_freq, steps, policy_type, batch_size)
 
 @app.function(gpu="A100", image=image, secrets=[modal.Secret.from_name("wandb-secret"), modal.Secret.from_name("hf-secret"), modal.Secret.from_name("hf-name-secret")], timeout=86400)
-def run_lerobot_a100(dataset_repo_id, model_id, policy_name=None, save_freq=200000, log_freq=100, steps=None, policy_type=False):
+def run_lerobot_a100(dataset_repo_id, model_id, policy_name=None, save_freq=200000, log_freq=100, steps=None, policy_type=False, batch_size=None):
     """Run LeRobot training on A100"""
-    return _run_lerobot_training("A100", dataset_repo_id, model_id, policy_name, save_freq, log_freq, steps, policy_type)
+    return _run_lerobot_training("A100", dataset_repo_id, model_id, policy_name, save_freq, log_freq, steps, policy_type, batch_size)
 
 
-def _run_lerobot_training(gpu_type, dataset_repo_id, model_id, policy_name=None, save_freq=200000, log_freq=100, steps=None, policy_type=False):
+def _run_lerobot_training(gpu_type, dataset_repo_id, model_id, policy_name=None, save_freq=200000, log_freq=100, steps=None, policy_type=False, batch_size=None):
     """Shared training logic"""
     import torch
     import subprocess
@@ -117,6 +118,7 @@ def _run_lerobot_training(gpu_type, dataset_repo_id, model_id, policy_name=None,
     print(f"GPU Type: {gpu_type}")
     print(f"Policy Name: {policy_name if policy_name else 'auto-generated'}")
     print(f"Steps: {steps if steps else 'default (from config)'}")
+    print(f"Batch Size: {batch_size if batch_size else 'default (from config)'}")
     
     # Set up Hugging Face authentication
     try:
@@ -151,6 +153,15 @@ def _run_lerobot_training(gpu_type, dataset_repo_id, model_id, policy_name=None,
             f"--log_freq={log_freq}",
             f"--output_dir={output_dir}"
         ]
+        
+        # Generate job name if policy_name is provided
+        if policy_name:
+            cmd.append(f"--job_name={policy_name}")
+        else:
+            # Auto-generate job name
+            dataset_name = dataset_repo_id.split('/')[-1] if '/' in dataset_repo_id else dataset_repo_id
+            auto_job_name = f"{policy_path}_{datetime.now().strftime('%m%d')}_{dataset_name}"
+            cmd.append(f"--job_name={auto_job_name}")
     else:
         cmd = [
             "python", "lerobot/scripts/train.py",
@@ -161,6 +172,10 @@ def _run_lerobot_training(gpu_type, dataset_repo_id, model_id, policy_name=None,
             f"--log_freq={log_freq}",
             f"--output_dir={output_dir}"
         ]
+    
+    # Add batch size if specified
+    if batch_size:
+        cmd.append(f"--batch_size={batch_size}")
     
     # Add steps if specified
     if steps:
@@ -227,20 +242,23 @@ def main(
     log_freq: int = 100,
     steps: int = None,
     skip_test: bool = False,
-    policy_type: bool = False
+    policy_type: bool = False,
+    batch_size: int = None
 ):
     """
     Run LeRobot training with configurable parameters.
     
     Args:
         dataset_repo_id: HuggingFace dataset repository ID
-        model_id: Model to use for training
-        gpu_type: GPU instance type (H100, A100, A10G, T4)
-        policy_name: Custom name for output repository (optional)
+        model_id: Model to use for training (policy path) or policy type (if policy_type=True)
+        gpu_type: GPU instance type (H100, A100)
+        policy_name: Custom name for output repository/job name (optional)
         save_freq: Save frequency for checkpoints
         log_freq: Logging frequency
         steps: Number of training steps (optional, uses config default if not specified)
         skip_test: Skip the setup test
+        policy_type: If True, uses model_id as policy.type; if False, uses model_id as policy.path
+        batch_size: Training batch size (optional, uses config default if not specified)
     """
     
     print(f"Configuration:")
@@ -250,6 +268,7 @@ def main(
     print(f"  Steps: {steps if steps else 'default'}")
     print(f"  Policy Name: {policy_name if policy_name else 'auto-generated'}")
     print(f"  Policy Type: {policy_type}")
+    print(f"  Batch Size: {batch_size if batch_size else 'default'}")
     
     if not skip_test:
         print("\nTesting setup...")
@@ -274,7 +293,8 @@ def main(
         save_freq=save_freq,
         log_freq=log_freq,
         steps=steps,
-        policy_type=policy_type
+        policy_type=policy_type,
+        batch_size=batch_size
     )
     
     print(f"\n✅ Training completed! Model uploaded to: {result}")
