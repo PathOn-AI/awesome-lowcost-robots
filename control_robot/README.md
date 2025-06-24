@@ -1,18 +1,31 @@
-# SO-ARM100 Robot Control
+# SO-ARM101 Robot Control Script
 
-Control the SO-ARM100 robotic arm in both physical and simulation environments.
+## 🛠️ Prerequisites
 
-## 🤖 1. Physical Robot Control
+- Python environment with LeRobot installed
+- SO-ARM101 robotic arm hardware
 
-We use the robot device config and control scripts from LeRobot to control the SO-Arm100 follower arm with one Python script.
-
-**Quick Start:**
 ```bash
 conda activate lerobot
-python test_robot.py
 ```
 
-**TODO:**
-- [ ] Keyboard control implementation
-- [ ] Camera integration
-- [ ] Save data in LeRobotDataset format
+## 🚀 Quick Start
+
+### 1. Physical Robot Control
+
+**Follower Arm Control** - Moves the robot through a sequence of positions:
+```bash
+python control_robot.py
+```
+
+**Leader Arm Control** - Control the leader arm for teleoperation:
+```bash
+python control_teleoperator.py
+```
+
+### 2. Real-time Position Monitoring
+
+Monitor live position data from the leader arm:
+```bash
+python use_teleoperator.py
+```
