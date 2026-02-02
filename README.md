@@ -2,13 +2,11 @@
 
 > 🚀 **Note:** Major modifications to this repository are planned for January 2026, developed by the PathOnAI open source team. 🛠️
 
-Step-by-step tutorial at https://learn-robotics.pathon.ai/
+Step-by-step tutorial at https://www.pathon.ai/blog
 
 ## Tutorials:
-* **General Introduction to SO-ARM100 and LeRobot**: https://learn-robotics.pathon.ai/blog/soarm100
-* **Using LeRobot in Simulation Environment**: https://learn-robotics.pathon.ai/blog/simulation
-* **Control the Open-Source Robot Arm with ACT (Action Chunking with Transformers) Using LeRobot**: https://learn-robotics.pathon.ai/blog/lerobot_act
-* **Control the Open-Source Robot Arm with Pi0 Using LeRobot**: https://learn-robotics.pathon.ai/blog/lerobot_pi0
+* **General Introduction to SO-ARM100 and LeRobot**: https://www.pathon.ai/blog/soarm100
+* **Using LeRobot in Simulation Environment**: https://www.pathon.ai/blog/simulation
 
 ## 1. Open-Source Hardware
 
