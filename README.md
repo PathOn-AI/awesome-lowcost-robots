@@ -10,6 +10,14 @@ Step-by-step tutorial at https://www.pathon.ai/blog
 
 ## 1. Open-Source Hardware
 
+### 1.1 Sensors
+
+| **Platform** | **Type** | **Description** | **Repository** |
+|--------------|----------|-----------------|----------------|
+| **iPhone Sensor Suite** | LiDAR + RGB + IMU | Use iPhone as a full sensor suite (depth camera, 2D/3D LiDAR, RGB, IMU) for robot manipulation and navigation | [iphone_sensor_suite](iphone_sensor_suite/) |
+
+### 1.2 Robot Arms & Mobile Manipulators
+
 | **Platform** | **Type** | **Description** | **Repository** |
 |--------------|----------|-----------------|----------------|
 | **SO-100 & SO-101** | Robotic Arms | Standard Open robotic arms | https://github.com/TheRobotStudio/SO-ARM100 |
