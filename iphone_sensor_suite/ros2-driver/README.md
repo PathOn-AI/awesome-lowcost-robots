@@ -28,7 +28,7 @@ Note: `numpy<2` is required for compatibility with ROS2 Jazzy's cv_bridge.
 ## Running
 
 ```bash
-cd ~/opensource_record3d/ros2-driver
+cd ros2-driver
 pip install -e .
 ```
 

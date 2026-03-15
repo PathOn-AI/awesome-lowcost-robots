@@ -38,12 +38,12 @@ client.stop()
 
 ### OpenCV Viewer
 ```bash
-python examples/simple_viewer.py 192.168.50.132
+python examples/simple_viewer.py <IPHONE_IP>
 ```
 
 ### Open3D Point Cloud
 ```bash
-python examples/point_cloud.py 192.168.50.132
+python examples/point_cloud.py <IPHONE_IP>
 ```
 
 ## API Reference

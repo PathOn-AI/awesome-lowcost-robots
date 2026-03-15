@@ -4,7 +4,7 @@ setup(
     name="iphone-sensor-sdk",
     version="0.1.0",
     description="Python client for iPhone RGBD streaming",
-    author="PathOn AI",
+    author="PathOn Robotics",
     packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[

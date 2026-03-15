@@ -49,9 +49,6 @@ You need three terminals.
 export ROS_DOMAIN_ID=50
 source /opt/ros/jazzy/setup.bash
 source ros2-driver/venv/bin/activate
-cd ~/opensource_record3d
-source install/setup.bash
-python3 -m ros2_driver.iphone_sensor_node --ros-args -p host:=192.168.50.132
 python3 -m ros2_driver.iphone_sensor_node --ros-args -p host:=<IPHONE_IP>
 ```
 

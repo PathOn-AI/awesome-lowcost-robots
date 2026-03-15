@@ -1,14 +1,14 @@
 # awesome-lowcost-robots
 
-Open-source tools for low-cost robot manipulation and autonomous navigation.
+A curated collection of open-source tools and resources for building and controlling low-cost robots.
 
 Step-by-step tutorials at https://www.pathon.ai/blog
 
-## Components
+## Tools
 
-| **Component** | **Description** | **Docs** |
+| **Tool** | **Description** | **Docs** |
 |---|---|---|
-| **iPhone Sensor Suite** | Use iPhone as a full sensor suite (LiDAR, RGB, IMU) for robot manipulation and navigation | [iphone_sensor_suite/](iphone_sensor_suite/) |
+| **iPhone Sensor Suite** | Use iPhone as a full sensor suite (LiDAR, RGB, IMU) for robot manipulation and navigation — includes Python SDK, ROS2 driver, and calibration | [iphone_sensor_suite/](iphone_sensor_suite/) |
 
 ## Resources
 

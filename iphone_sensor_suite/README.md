@@ -123,7 +123,7 @@ python3 -m ros2_driver.iphone_sensor_node --ros-args -p usb:=true
 
 You should see output like:
 ```
-[INFO] Connecting to 192.168.50.132:8888...
+[INFO] Connecting to <IPHONE_IP>:8888...
 [INFO] Connected! Starting frame loop.
 [INFO] First frame: depth=(192, 256), color=(1440, 1920, 3), conf=yes, imu=yes
 [INFO] Published 30 frames

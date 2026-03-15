@@ -4,7 +4,7 @@
   <name>ros2_driver</name>
   <version>0.1.0</version>
   <description>ROS2 driver for iPhone sensor streaming</description>
-  <maintainer email="todo@todo.com">PathOn AI</maintainer>
+  <maintainer email="danqing@pathon.ai">PathOn Robotics</maintainer>
   <license>MIT</license>
 
   <depend>rclpy</depend>
