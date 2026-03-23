@@ -42,4 +42,4 @@ We may update this Privacy Policy from time to time. Changes will be posted with
 If you have questions about this Privacy Policy, contact us at:
 
 **PathOn Robotics**
-Email: privacy@pathonrobotics.com
+Email: info@pathon.ai
