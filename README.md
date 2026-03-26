@@ -1,6 +1,6 @@
-# awesome-lowcost-robots
+# Pathon Robotics Open Source
 
-A curated collection of open-source tools and resources for building and controlling low-cost robots.
+Open-source tools and resources by [Pathon Robotics](https://www.pathon.ai) for building and controlling low-cost robots.
 
 Step-by-step tutorials at https://www.pathon.ai/blog
 
