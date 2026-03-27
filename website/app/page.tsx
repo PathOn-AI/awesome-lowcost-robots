@@ -18,7 +18,7 @@ export default function Home() {
             and controlling low-cost robots — by{" "}
             <a
               href="https://www.pathon.ai"
-              className="text-blue-600 hover:underline"
+              className="text-green-600 hover:underline"
             >
               Pathon Robotics
             </a>
@@ -27,7 +27,7 @@ export default function Home() {
           <div className="flex gap-4 justify-center">
             <Link
               href="/robots"
-              className="inline-flex items-center px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
             >
               Explore Robots
             </Link>
@@ -47,15 +47,15 @@ export default function Home() {
       <section className="border-y border-gray-200 bg-gray-50 py-12 px-6">
         <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8 text-center">
           <div>
-            <div className="text-3xl font-bold">{robots.length}</div>
+            <div className="text-3xl font-bold text-green-600">{robots.length}</div>
             <div className="text-sm text-gray-500 mt-1">Robots</div>
           </div>
           <div>
-            <div className="text-3xl font-bold">{categories.length}</div>
+            <div className="text-3xl font-bold text-green-600">{categories.length}</div>
             <div className="text-sm text-gray-500 mt-1">Categories</div>
           </div>
           <div>
-            <div className="text-3xl font-bold">100%</div>
+            <div className="text-3xl font-bold text-green-600">100%</div>
             <div className="text-sm text-gray-500 mt-1">Open Source</div>
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function Home() {
                 <Link
                   key={cat}
                   href={`/robots?category=${encodeURIComponent(cat)}`}
-                  className="block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-center"
+                  className="block p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors text-center"
                 >
                   <div className="font-semibold">{cat}</div>
                   <div className="text-sm text-gray-500 mt-1">
@@ -91,7 +91,7 @@ export default function Home() {
       <section className="py-16 px-6 border-t border-gray-200">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold mb-8 text-center">Our Tools</h2>
-          <div className="border border-gray-200 rounded-lg p-6">
+          <div className="border border-gray-200 rounded-lg p-6 hover:border-green-300 transition-colors">
             <h3 className="text-lg font-semibold mb-2">iPhone Sensor Suite</h3>
             <p className="text-gray-600 mb-4">
               Use iPhone as a full sensor suite (LiDAR, RGB, IMU) for robot
@@ -102,7 +102,7 @@ export default function Home() {
               href="https://github.com/PathOn-AI/pathon_opensource/tree/main/iphone_sensor_suite"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline text-sm font-medium"
+              className="text-green-600 hover:underline text-sm font-medium"
             >
               View documentation
             </a>

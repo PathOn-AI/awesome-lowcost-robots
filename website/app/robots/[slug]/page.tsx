@@ -40,7 +40,7 @@ export default async function RobotPage({
       <div className="flex items-center gap-4 mb-10">
         <Link
           href="/robots"
-          className="flex items-center justify-center w-10 h-10 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-center w-10 h-10 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors"
         >
           <span className="text-lg">&larr;</span>
         </Link>
@@ -137,7 +137,7 @@ export default async function RobotPage({
           href={robot.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+          className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
         >
           View project &rarr;
         </a>
