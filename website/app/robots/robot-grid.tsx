@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { Robot } from "@/lib/robots";
 
 export function RobotGrid({
@@ -76,7 +77,7 @@ export function RobotGrid({
       {/* Robot cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((robot) => (
-          <a
+          <Link
             key={robot.slug}
             href={`/robots/${robot.slug}`}
             className="group block border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
@@ -113,7 +114,7 @@ export function RobotGrid({
                 </div>
               )}
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </div>
