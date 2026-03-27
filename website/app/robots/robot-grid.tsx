@@ -30,7 +30,7 @@ export function RobotGrid({
         <select
           value={activeCategory}
           onChange={(e) => setActiveCategory(e.target.value)}
-          className="h-9 px-3 pr-8 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_8px_center] bg-no-repeat cursor-pointer hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-1"
+          className="h-9 px-3 pr-8 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_8px_center] bg-no-repeat cursor-pointer hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
         >
           <option value="">All Types ({robots.length})</option>
           {categories.map((cat) => (
@@ -48,7 +48,7 @@ export function RobotGrid({
           onClick={() => setActivePurpose(null)}
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
             activePurpose === null
-              ? "bg-gray-900 text-white"
+              ? "bg-green-600 text-white"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
@@ -60,7 +60,7 @@ export function RobotGrid({
             onClick={() => setActivePurpose(p)}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               activePurpose === p
-                ? "bg-gray-900 text-white"
+                ? "bg-green-600 text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
@@ -91,7 +91,7 @@ export function RobotGrid({
             </div>
             <div className="p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="font-semibold group-hover:text-blue-600 transition-colors">
+                <h3 className="font-semibold group-hover:text-green-600 transition-colors">
                   {robot.name}
                 </h3>
                 <span className="shrink-0 text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
@@ -106,7 +106,7 @@ export function RobotGrid({
                   {robot.purpose.map((p) => (
                     <span
                       key={p}
-                      className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full"
+                      className="text-xs px-2 py-0.5 bg-green-50 text-green-600 rounded-full"
                     >
                       {p}
                     </span>

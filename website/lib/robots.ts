@@ -20,6 +20,8 @@ export interface Robot {
   purpose: string[];
 }
 
+export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/opensource";
+
 const robotsDirectory = path.join(process.cwd(), "content/robots");
 
 export function getAllRobots(): Robot[] {
@@ -37,7 +39,7 @@ export function getAllRobots(): Robot[] {
         category: data.category,
         description: data.description,
         link: data.link,
-        image: data.image,
+        image: `${BASE_PATH}${data.image}`,
         content,
         specs: data.specs || {},
         components: data.components || [],
