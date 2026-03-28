@@ -14,7 +14,7 @@ export default function RobotsPage() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
       <div className="mb-10">
-        <h1 className="text-4xl font-bold tracking-tight mb-3">Robots</h1>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">Robots</h1>
         <p className="text-gray-600 text-lg">
           A curated map of open-source and low-cost robots. Click any robot to
           learn more.
