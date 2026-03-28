@@ -10,10 +10,10 @@ export default function Home() {
       {/* Hero */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl font-bold tracking-tight mb-6">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6">
             Open Source Robotics Lab
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             A curated collection of open-source tools and resources for building
             and controlling low-cost robots — by{" "}
             <a
@@ -24,7 +24,7 @@ export default function Home() {
             </a>
             .
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/robots"
               className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
@@ -45,7 +45,7 @@ export default function Home() {
 
       {/* Stats */}
       <section className="border-y border-gray-200 bg-gray-50 py-12 px-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8 text-center">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           <div>
             <div className="text-3xl font-bold text-green-600">{robots.length}</div>
             <div className="text-sm text-gray-500 mt-1">Robots</div>

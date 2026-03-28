@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+import { MobileMenu } from "./mobile-menu";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,22 +31,25 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-white text-gray-900">
-        <header className="bg-gray-100 shadow-sm">
+        <header className="bg-gray-100 shadow-sm relative">
           <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+            {/* Logo */}
             <a href="https://www.pathon.ai" className="flex items-center gap-2">
               <img
                 src="/opensource/pathonai.png"
                 alt="PathOn Robotics"
                 className="h-8 w-8"
               />
-              <span className="text-xl font-bold text-green-600 tracking-tight">
+              <span className="text-xl font-bold text-green-600 tracking-tight hidden sm:inline">
                 PathOn Robotics
               </span>
-              <span className="text-xl text-gray-400 font-normal">
+              <span className="text-xl text-gray-400 font-normal hidden sm:inline">
                 Open Source
               </span>
             </a>
-            <div className="flex items-center gap-8">
+
+            {/* Desktop nav */}
+            <div className="hidden md:flex items-center gap-8">
               <nav className="flex items-center gap-8">
                 <Link href="/" className="text-lg font-semibold text-gray-700 hover:text-green-600 transition-colors">
                   Home
@@ -93,6 +97,9 @@ export default function RootLayout({
                 </a>
               </div>
             </div>
+
+            {/* Mobile hamburger menu */}
+            <MobileMenu />
           </div>
         </header>
         <main className="flex-1">{children}</main>

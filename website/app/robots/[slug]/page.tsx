@@ -37,14 +37,14 @@ export default async function RobotPage({
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-10">
+      <div className="flex flex-wrap items-center gap-4 mb-10">
         <Link
           href="/robots"
           className="flex items-center justify-center w-10 h-10 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors"
         >
           <span className="text-lg">&larr;</span>
         </Link>
-        <h1 className="text-2xl font-bold uppercase tracking-widest">
+        <h1 className="text-xl md:text-2xl font-bold uppercase tracking-widest">
           {robot.name}
         </h1>
         <span className="text-sm text-gray-400 uppercase tracking-wide">
