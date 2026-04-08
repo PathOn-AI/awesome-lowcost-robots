@@ -44,7 +44,7 @@ You need a built [SO-101 arm](https://github.com/TheRobotStudio/SO-ARM100) as th
 
 We implement a vision-language grasping pipeline using SAM3 for segmentation and grasp generation models. Given a natural language command (e.g., "pick up the banana"), the system segments the target object and plans a grasp.
 
-https://github.com/PathOn-AI/pathon_opensource/raw/main/so101_6dof_symmetric_gripper/media/videos/banana_pick_demo.mp4
+[![Banana picking demo](https://cdn.loom.com/sessions/thumbnails/2fed8ad63ee7416fad60bd227efd1a95-with-play.gif)](https://www.loom.com/share/2fed8ad63ee7416fad60bd227efd1a95)
 
 *Simulated pick-and-place with vision-language grasping.*
 
@@ -52,7 +52,7 @@ https://github.com/PathOn-AI/pathon_opensource/raw/main/so101_6dof_symmetric_gri
 
 Real-robot vision-language grasping is under active development -- demo coming soon. The real robot is already integrated with ROS2 MoveIt for motion planning, with point cloud overlay for scene understanding.
 
-https://github.com/PathOn-AI/pathon_opensource/raw/main/so101_6dof_symmetric_gripper/media/videos/moveit_demo.mp4
+[![MoveIt demo](https://cdn.loom.com/sessions/thumbnails/303cc35079a64f459af959ff9830bfd2-with-play.gif)](https://www.loom.com/share/303cc35079a64f459af959ff9830bfd2)
 
 *MoveIt motion planning with point cloud overlay on the physical SO-101 6DoF arm.*
 
