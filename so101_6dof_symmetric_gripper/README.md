@@ -6,10 +6,12 @@
 
 An upgrade kit for the [SO-101](https://github.com/TheRobotStudio/SO-ARM100) robotic arm, adding a 6th degree of freedom (wrist pitch + yaw) and a symmetric parallel-jaw gripper. The 6DoF wrist enables the arm to approach objects from any angle, and the symmetric gripper provides balanced grasping force -- together enabling seamless integration with state-of-the-art grasp generation models and making it easier to grasp objects reliably.
 
-![Assembled SO-101 6DoF with symmetric gripper](media/images/assembled.png)
+<img src="media/images/assembled.png" alt="Assembled SO-101 6DoF with symmetric gripper" width="500">
+
 *Fully assembled SO-101 6DoF arm with symmetric gripper on a playground setup with overhead camera mount.*
 
-![MoveIt motion planning with point cloud](media/images/moveit.png)
+<img src="media/images/moveit.png" alt="MoveIt motion planning with point cloud" width="500">
+
 *RViz visualization showing MoveIt motion planning, robot model, TF frames, and point cloud overlay.*
 
 ## What's Included
@@ -38,7 +40,7 @@ You need a built [SO-101 arm](https://github.com/TheRobotStudio/SO-ARM100) as th
 
 We implement a vision-language grasping pipeline using SAM3 for segmentation and grasp generation models. Given a natural language command (e.g., "pick up the banana"), the system segments the target object and plans a grasp.
 
-https://github.com/user-attachments/assets/banana_pick_demo.mp4
+<video src="media/videos/banana_pick_demo.mp4" controls width="500"></video>
 
 *Simulated pick-and-place with vision-language grasping.*
 
@@ -46,7 +48,7 @@ https://github.com/user-attachments/assets/banana_pick_demo.mp4
 
 Real-robot vision-language grasping is under active development -- demo coming soon. The real robot is already integrated with ROS2 MoveIt for motion planning, with point cloud overlay for scene understanding.
 
-https://github.com/user-attachments/assets/moveit_demo.mp4
+<video src="media/videos/moveit_demo.mp4" controls width="500"></video>
 
 *MoveIt motion planning with point cloud overlay on the physical SO-101 6DoF arm.*
 
