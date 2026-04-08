@@ -11,7 +11,9 @@ Use an iPhone as a full sensor suite (LiDAR RGBD, IMU, confidence) for low-cost 
 
 ## iOS App
 
-The iOS streaming app is required to stream sensor data from the iPhone. We are deciding whether to release the iOS source code or provide a free iOS app. Stay tuned!
+Download the free iOS streaming app:
+
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/app/id6761314229)
 
 ## Overview
 
@@ -193,6 +195,14 @@ TF tree: `world` -> `camera_link` -> `camera_color_optical_frame` / `camera_dept
 | `depth_range_min` | `0.1` | Min depth in meters |
 | `depth_range_max` | `5.0` | Max depth in meters |
 | `min_confidence` | `1` | Min ARKit confidence for point cloud (0=low, 1=medium, 2=high) |
+
+## 📰 News
+
+| Date | Release |
+|------|---------|
+| 2026-04-17 | New version of calibration (coming soon) |
+| 2026-04-07 | iOS app released on the [App Store](https://apps.apple.com/app/id6761314229) |
+| 2026-03-09 | iPhone Sensor Suite open-sourced: Python SDK, ROS2 driver, and ArUco calibration |
 
 ## How iPhone LiDAR Works
 
