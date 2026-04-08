@@ -9,8 +9,7 @@ Use an iPhone as a full sensor suite (LiDAR RGBD, IMU, confidence) for low-cost 
 📖 [Blog: iPhone as a Robot Sensor Suite](https://www.pathon.ai/blog/iphone-as-sensor) *(work in progress)*
 
 <p align="center">
-  <img src="images/iphone_streaming.jpg" alt="iPhone Streaming App" width="45%">
-  <img src="images/rviz_pointcloud.jpg" alt="RViz Point Cloud" width="45%">
+  <img src="images/rviz_pointcloud.png" alt="RViz Point Cloud" width="600">
 </p>
 
 ## iOS App
@@ -18,6 +17,13 @@ Use an iPhone as a full sensor suite (LiDAR RGBD, IMU, confidence) for low-cost 
 Download the free iOS streaming app:
 
 [![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/app/id6761314229)
+
+<p align="center">
+  <img src="images/app_idle.png" alt="iOS app idle" width="250">
+  <img src="images/app_streaming.png" alt="iOS app streaming" width="250">
+</p>
+
+*Left: app ready to stream. Right: streaming at 30fps with 1 client connected.*
 
 ## Overview
 
