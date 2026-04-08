@@ -10,10 +10,11 @@ Open-source tools and resources by [Pathon Robotics](https://www.pathon.ai) for 
 
 Step-by-step tutorials at https://www.pathon.ai/blog
 
-## Tools
+## Projects
 
-| **Tool** | **Description** | **Docs** |
+| **Project** | **Description** | **Docs** |
 |---|---|---|
+| **SO-101 6DoF + Symmetric Gripper** | 6DoF wrist upgrade and symmetric parallel-jaw gripper for the SO-101 arm — hardware files, assembly guide | [so101_6dof_symmetric_gripper/](so101_6dof_symmetric_gripper/) |
 | **iPhone Sensor Suite** | Use iPhone as a full sensor suite (LiDAR, RGB, IMU) for robot manipulation and navigation — includes Python SDK, ROS2 driver, and calibration | [iphone_sensor_suite/](iphone_sensor_suite/) |
 
 ## Resources
