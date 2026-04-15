@@ -1,6 +1,6 @@
 # Scanner3D
 
-Offline 3D scanning app for iPhone. Capture depth, RGB, camera pose, and confidence maps using the LiDAR sensor, then export scans for post-processing with Python tools.
+Offline 3D scanning app for iPhone. Capture depth, RGB, camera pose, and confidence maps using the LiDAR sensor, then export scans and fuse them into 3D point clouds in marker frame.
 
 ## iOS App
 
@@ -21,13 +21,14 @@ Download the free iOS scanning app:
 
 - iPhone 12 Pro or newer (with LiDAR sensor)
 - iOS 17.5+
+- Python 3.11 (for the processing pipeline)
 
 ## How It Works
 
-1. **Scan** -- Point your iPhone at an object, tap "Start Scan", then tap "Capture" for each frame
+1. **Scan** -- Point your iPhone at an object with an ArUco marker visible, tap "Start Scan", then tap "Capture" for each frame
 2. **Save** -- Save the scan session to the Library
 3. **Export** -- Export as a zip file and transfer to your computer via Files app
-4. **Process** -- Use the Python tools below to fuse captures into a 3D point cloud or mesh
+4. **Process** -- Run the 3-step pipeline below to get a fused point cloud in marker frame
 
 ## Exported Data Format
 
@@ -43,69 +44,68 @@ Each scan session is exported as a zip containing `capture_NNNNNN/` folders. Eac
 | `meta.json` | Capture metadata (timestamps, resolutions) |
 | `depth_vis.png` | Depth visualization (red=close, blue=far) |
 
-## Python Tools
+## Pipeline
 
-Offline fusion tools for combining multiple captures into a single 3D point cloud or mesh.
+3-step processing pipeline to go from raw captures to a fused point cloud in marker frame.
 
 ### Setup
 
 Requires Python 3.11 (Open3D does not support 3.13 yet).
 
 ```bash
+cd pipeline
 python3.11 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Usage
+### Run
 
 ```bash
+cd pipeline
 source venv/bin/activate
 
-# Point cloud fusion (from PLY files)
-python3 fuse_pointclouds.py --data-dir <scan_dir>
+# Step 1: Calibrate — find ArUco marker pose from the best capture
+python3 calibrate_3d.py --scan-dir ../example_scan/2026-03-23--19-45-00 --best
 
-# Point cloud fusion (from depth images)
-python3 fuse_pointclouds.py --data-dir <scan_dir> --mode depth
+# Step 2: TSDF fusion — fuse all captures into a single mesh
+python3 fuse_pointclouds.py --data-dir ../example_scan/2026-03-23--19-45-00 --mode tsdf --voxel-size 0.002 --icp
 
-# TSDF mesh fusion (best quality)
-python3 fuse_pointclouds.py --data-dir <scan_dir> --mode tsdf --voxel-size 0.002
-
-# Point cloud with ICP refinement
-python3 fuse_pointclouds.py --data-dir <scan_dir> --mode ply --icp
+# Step 3: Transform — convert fused mesh from world frame to marker frame
+python3 transform_pointcloud.py \
+    --input ../example_scan/2026-03-23--19-45-00/fused.ply \
+    --world-marker ../example_scan/2026-03-23--19-45-00/T_world_marker_3d.txt \
+    --output ../example_scan/2026-03-23--19-45-00/fused_marker.ply
 ```
 
-### Fusion Modes
+### Output
 
-| Mode | Output | Best For |
-|------|--------|----------|
-| `--mode ply` (default) | Point cloud (stacked from PLY files) | Quick preview |
-| `--mode depth` | Point cloud (from depth images) | Custom depth filtering |
-| `--mode ply --icp` | Point cloud (ICP-aligned) | When ARKit pose has drift |
-| `--mode tsdf` | Triangle mesh (clean, denoised) | Final quality output |
-
-### Calibration
-
-ArUco-based camera-to-robot calibration tools:
-
-```bash
-# Single-frame calibration
-python3 calibrate.py --data-dir <scan_dir>
-
-# Multi-frame 3D calibration
-python3 calibrate_3d.py --data-dir <scan_dir>
-
-# Triangulation-based calibration
-python3 calibrate_triangulate.py --data-dir <scan_dir>
 ```
+example_scan/2026-03-23--19-45-00/
+├── capture_000000/              # Raw captures (input)
+├── capture_000001/
+├── ...
+├── T_world_marker_3d.txt        # Step 1: marker pose (from best capture)
+├── fused.ply                    # Step 2: fused mesh in ARKit world frame
+└── fused_marker.ply             # Step 3: fused mesh in marker frame
+```
+
+### Pipeline Details
+
+| Step | Script | What it does |
+|------|--------|-------------|
+| 1 | `calibrate_3d.py --best` | Detects ArUco marker in RGB, looks up LiDAR depth at corners, selects the capture with the largest marker (closest to camera = most accurate depth) |
+| 2 | `fuse_pointclouds.py --mode tsdf` | TSDF volumetric fusion using ARKit camera poses. ICP refines pose alignment between captures. Outputs a clean triangle mesh |
+| 3 | `transform_pointcloud.py` | Transforms the fused mesh from ARKit world frame to marker frame via `inv(T_world_marker)` |
 
 ### Key Options
 
 | Option | Description |
 |--------|-------------|
-| `--data-dir` | Directory containing `capture_*` folders (required) |
-| `--mode` | `ply`, `depth`, or `tsdf` |
-| `--voxel-size` | Voxel size in meters (default: 0.005) |
-| `--icp` | Enable ICP alignment refinement (ply/depth modes only) |
+| `--scan-dir` / `--data-dir` | Directory containing `capture_*` folders (required) |
+| `--best` | Use the single best capture for calibration (recommended) |
+| `--mode` | `ply`, `depth`, or `tsdf` (default: `ply`) |
+| `--voxel-size` | Voxel size in meters for TSDF (default: 0.005, use 0.002 for fine detail) |
+| `--icp` | Enable ICP pose refinement before TSDF integration |
 | `--bounds` | Workspace bounds filter: `x_min,x_max,y_min,y_max,z_min,z_max` |
 | `--output` | Output PLY path |
