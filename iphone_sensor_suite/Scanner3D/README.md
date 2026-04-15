@@ -2,6 +2,12 @@
 
 Offline 3D scanning app for iPhone. Capture depth, RGB, camera pose, and confidence maps using the LiDAR sensor, then export scans and fuse them into 3D point clouds in marker frame.
 
+## Demo
+
+https://www.loom.com/share/b4a0ab5e65ce4debafca076c697b67ae
+
+*Visualization of the fused point cloud in marker frame.*
+
 ## iOS App
 
 Download the free iOS scanning app:
