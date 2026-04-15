@@ -57,7 +57,7 @@ export default function RootLayout({
                 <Link href="/robots" className="text-lg font-semibold text-gray-700 hover:text-green-600 transition-colors">
                   Robots
                 </Link>
-                <Link href="/tools/pointcloud-viewer" className="text-lg font-semibold text-gray-700 hover:text-green-600 transition-colors">
+                <Link href="/tools" className="text-lg font-semibold text-gray-700 hover:text-green-600 transition-colors">
                   Tools
                 </Link>
               </nav>

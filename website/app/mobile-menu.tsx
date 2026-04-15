@@ -43,7 +43,7 @@ export function MobileMenu() {
               Robots
             </Link>
             <Link
-              href="/tools/pointcloud-viewer"
+              href="/tools"
               className="block text-lg font-semibold text-gray-700 hover:text-green-600"
               onClick={() => setMobileMenuOpen(false)}
             >

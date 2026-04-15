@@ -52,7 +52,7 @@ export default function PointCloudViewerPage() {
           </li>
           <li>/</li>
           <li>
-            <Link href="/tools/pointcloud-viewer" className="hover:text-green-600">
+            <Link href="/tools" className="hover:text-green-600">
               Tools
             </Link>
           </li>
