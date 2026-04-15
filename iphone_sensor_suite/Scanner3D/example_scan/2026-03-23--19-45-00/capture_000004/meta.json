@@ -1,0 +1,10 @@
+{
+  "base_frame" : "world",
+  "camera_frame" : "camera",
+  "capture_index" : 4,
+  "depth_height" : 192,
+  "depth_width" : 256,
+  "rgb_height" : 1440,
+  "rgb_width" : 1920,
+  "timestamp_sec" : 21268.012467166001
+}
