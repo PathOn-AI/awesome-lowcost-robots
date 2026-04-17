@@ -196,12 +196,27 @@ def fuse_tsdf(snapshot_dirs, voxel_size=0.005, sdf_trunc=None, depth_trunc=3.0,
     if use_icp and len(snapshots) > 1:
         print("\nICP pose refinement for TSDF:")
 
+        # Pick the densest capture as reference (most points = most reliable)
+        ref_idx = 0
+        max_pts = 0
+        for i, snap in enumerate(snapshots):
+            ply_path = os.path.join(os.path.dirname(snapshot_dirs[0]), snap['name'], 'pointcloud.ply')
+            pcd_tmp = o3d.io.read_point_cloud(ply_path)
+            n_pts = len(pcd_tmp.points)
+            if n_pts > max_pts:
+                max_pts = n_pts
+                ref_idx = i
+
+        # Move reference to index 0 so the rest of the code works unchanged
+        if ref_idx != 0:
+            snapshots[0], snapshots[ref_idx] = snapshots[ref_idx], snapshots[0]
+
         # Build world-frame point clouds for ICP
         ref_snap = snapshots[0]
         ref_pts, _, _ = load_snapshot_ply(os.path.join(
             os.path.dirname(snapshot_dirs[0]), ref_snap['name']))
         accumulated_pcd = make_pcd(ref_pts, np.ones_like(ref_pts) * 0.5)
-        print(f"  Reference: {ref_snap['name']}")
+        print(f"  Reference: {ref_snap['name']} ({max_pts} points)")
 
         # icp_corrections[i] = correction transform for snapshot i (identity for reference)
         icp_corrections = [np.eye(4)]
