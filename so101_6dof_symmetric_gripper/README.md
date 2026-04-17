@@ -48,13 +48,21 @@ https://www.loom.com/share/2fed8ad63ee7416fad60bd227efd1a95
 
 *Simulated pick-and-place with vision-language grasping.*
 
-### Vision-Language Grasping (Real Robot)
+### MoveIt Motion Planning (Real Robot)
 
-Real-robot vision-language grasping is under active development -- demo coming soon. The real robot is already integrated with ROS2 MoveIt for motion planning, with point cloud overlay for scene understanding.
+The real robot is integrated with ROS2 MoveIt for motion planning, with point cloud overlay for scene understanding.
 
 https://www.loom.com/share/303cc35079a64f459af959ff9830bfd2
 
 *MoveIt motion planning with point cloud overlay on the physical SO-101 6DoF arm.*
+
+### Vision-Language Grasping (Real Robot)
+
+Vision-language grasping running on the physical SO-101 6DoF arm.
+
+https://www.loom.com/share/fe4379299d904ffc811d0ab0f7dc357c
+
+*Real-robot pick-and-place with vision-language grasping.*
 
 ## Getting Started
 
@@ -66,8 +74,11 @@ https://www.loom.com/share/303cc35079a64f459af959ff9830bfd2
 
 | Date | Release |
 |------|---------|
-| -- | Real-robot vision-language grasping demo (coming soon) |
-| -- | Software release: URDF, MJCF, digital twin, ROS2, MoveIt config, MuJoCo simulation (coming soon) |
+| -- | Software release: digital twin, ROS2, MoveIt config, MuJoCo simulation (coming soon) |
+| 2026-04-16 | Demo video: vision-language grasping (real robot) |
+| 2026-04-14 | Software release: URDF, MJCF, and meshes for SO-101 6DoF symmetric gripper |
+| 2026-04-13 | Assembly guide with images and print orientation for 6DoF wrist and gripper |
+| 2026-04-12 | Bill of materials for 6DoF wrist upgrade and symmetric gripper |
 | 2026-04-07 | Demo videos: vision-language grasping (simulation), MoveIt motion planning with point cloud (real robot) |
 | 2026-04-07 | Hardware release: 6DoF wrist (pitch + yaw) STL/STEP files, symmetric gripper STL/STEP files |
 
