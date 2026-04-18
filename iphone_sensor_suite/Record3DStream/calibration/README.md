@@ -15,7 +15,7 @@ The `world` frame is a fixed reference frame you define (e.g., a table corner, a
 3. Collects 100 pose samples, averages them, and publishes the result as a static TF
 4. Remove the marker — the calibration persists as long as the node is running
 
-![ArUco marker](iphone_aruco.png) ![ArUco orientation](iphone_aruco_orientation.png)
+![ArUco marker](../../images/iphone_aruco.png) ![ArUco orientation](../../images/iphone_aruco_orientation.png)
 
 ## Prerequisites
 
@@ -153,8 +153,8 @@ If using a different marker, update `MARKER_ID` in both `camera_calibration.py` 
 | `camera_calibration.py` | Main calibration script — detects marker, averages 100 samples, publishes static TF chain |
 | `aruco_visualizer.py` | Debug tool — live view of ArUco detection with 3D axes overlay |
 | `dictionary_id.py` | Utility to identify which ArUco dictionary an unknown marker belongs to |
-| `iphone_aruco.png` | Reference photo of the ArUco marker |
-| `iphone_aruco_orientation.png` | Reference photo showing marker axis orientation |
+| `../../images/iphone_aruco.png` | Reference photo of the ArUco marker |
+| `../../images/iphone_aruco_orientation.png` | Reference photo showing marker axis orientation |
 
 ## Troubleshooting
 
