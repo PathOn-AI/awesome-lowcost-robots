@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "Pathon Robotics Open Source",
   description:
     "Open-source tools and resources for building and controlling low-cost robots.",
+  icons: {
+    icon: "/pathonai.png",
+  },
 };
 
 export default function RootLayout({
