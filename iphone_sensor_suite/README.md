@@ -11,7 +11,7 @@ Open-source iPhone LiDAR tools for robotics. Two iOS apps with Python tooling fo
 | App | Description | App Store |
 |-----|-------------|-----------|
 | [Record3DStream](Record3DStream/) | Real-time LiDAR RGBD streaming to Python/ROS2 over WiFi or USB | [![Download](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/app/id6761314229) |
-| [Scanner3D](Scanner3D/) | Offline 3D scanning with point cloud capture and fusion | *Coming soon* |
+| [Scanner3D](Scanner3D/) | Offline 3D scanning with point cloud capture and fusion | [![Download](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/app/id6762235906) |
 
 ## Project Structure
 

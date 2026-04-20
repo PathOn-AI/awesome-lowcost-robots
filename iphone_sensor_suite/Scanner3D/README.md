@@ -12,7 +12,7 @@ https://www.loom.com/share/b4a0ab5e65ce4debafca076c697b67ae
 
 Download the free iOS scanning app:
 
-*Coming soon on the App Store*
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/app/id6762235906)
 
 ## Features
 
