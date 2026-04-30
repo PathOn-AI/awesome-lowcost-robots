@@ -8,6 +8,14 @@ ROS2 Jazzy package that receives RGBD data from the iPhone sensor iOS app and pu
 - iPhone sensor iOS app running on an iPhone Pro (12 Pro or newer)
 - iPhone and host machine on the same WiFi network
 
+## Demo
+
+Using the iPhone's LiDAR as a drop-in replacement for a 2D laser scanner. The `/scan` topic produced by `pointcloud_to_laserscan` (started by the launch file) feeds a standard 2D SLAM pipeline.
+
+https://www.loom.com/share/903ef7a126844111a8025947679171dd
+
+*Mapping stage: iPhone-as-2D-LiDAR feeding 2D SLAM.*
+
 ## Setup
 
 ```bash
@@ -28,16 +36,12 @@ Note: `numpy<2` is required for compatibility with ROS2 Jazzy's cv_bridge.
 ## Running
 
 ```bash
-cd ros2-driver
-pip install -e .
-```
-
-```bash
 # Terminal 1: Start the node
 export ROS_DOMAIN_ID=50
 source /opt/ros/jazzy/setup.bash
 source ros2-driver/venv/bin/activate
-python3 -m ros2_driver.iphone_sensor_node --ros-args -p host:=<IPHONE_IP>
+source install/setup.bash
+ros2 run ros2_driver iphone_sensor_node --ros-args -p host:=<IPHONE_IP>
 
 # Terminal 2: Verify topics
 export ROS_DOMAIN_ID=50
@@ -51,13 +55,16 @@ source /opt/ros/jazzy/setup.bash
 rviz2 -d ros2-driver/rviz/iphone_sensor.rviz
 ```
 
-Replace `<IPHONE_IP>` with the IP shown on the iPhone sensor app.
+Replace `<IPHONE_IP>` with the IP shown on the iPhone sensor app. For USB tethering instead of WiFi, add `-p usb:=true`.
 
 ### Using the launch file
+
+The launch file also starts a `pointcloud_to_laserscan` node to produce `/scan` from the point cloud:
 
 ```bash
 export ROS_DOMAIN_ID=50
 source /opt/ros/jazzy/setup.bash
+source ros2-driver/venv/bin/activate
 source install/setup.bash
 ros2 launch ros2_driver iphone_sensor.launch.py host:=<IPHONE_IP>
 ```
@@ -75,9 +82,9 @@ ros2 launch ros2_driver iphone_sensor.launch.py host:=<IPHONE_IP>
 | `depth/color/points` | `sensor_msgs/PointCloud2` | ~6fps | Colored point cloud |
 | `confidence/image_raw` | `sensor_msgs/Image` | 30fps | Confidence map (mono8: 0=low, 1=med, 2=high) |
 | `imu` | `sensor_msgs/Imu` | 30fps | Accelerometer + gyroscope |
-| `scan` | `sensor_msgs/LaserScan` | 30fps | 2D laser scan from middle row of depth |
+| `scan` | `sensor_msgs/LaserScan` | ~6fps | 2D laser scan (from `pointcloud_to_laserscan`, launch file only) |
 
-Point cloud and aligned depth publish at ~6fps (every 5th frame) to avoid blocking the stream.
+Point cloud and aligned depth publish at ~6fps (every 5th frame) to avoid blocking the stream. The `/scan` topic is produced by the `pointcloud_to_laserscan` node included in the launch file (toggle via `publish_scan:=false`), so it inherits the point cloud rate.
 
 QoS: All topics use **BEST_EFFORT** reliability, **VOLATILE** durability, **KEEP_LAST(1)**. When subscribing (e.g., in RViz2), set reliability to "Best Effort" to match.
 
@@ -112,12 +119,13 @@ world
 |-----------|---------|-------------|
 | `host` | `192.168.1.100` | iPhone IP address |
 | `port` | `8888` | TCP port |
+| `usb` | `false` | Use USB (iproxy) instead of WiFi |
 | `camera_name` | `camera` | Prefix for topics and TF frames |
 | `publish_pointcloud` | `true` | Enable PointCloud2 topic |
 | `publish_aligned_depth` | `true` | Enable aligned depth to color topic |
 | `publish_confidence` | `true` | Enable confidence map topic |
 | `publish_imu` | `true` | Enable IMU topic |
-| `publish_scan` | `true` | Enable LaserScan topic |
+| `publish_scan` | `true` | Launch-arg only: start `pointcloud_to_laserscan` to publish `/scan` |
 | `depth_range_min` | `0.1` | Min depth for point cloud (meters) |
 | `depth_range_max` | `5.0` | Max depth for point cloud (meters) |
 | `min_confidence` | `1` | Min ARKit confidence for point cloud (0=low, 1=medium, 2=high) |
@@ -128,7 +136,7 @@ world
 
 **Connection drops after ~20s**: If you have `publish_pointcloud` and `publish_aligned_depth` both enabled, the processing overhead can cause TCP buffer overflows. They are throttled to ~6fps by default, but you can disable them:
 ```bash
-python3 -m ros2_driver.iphone_sensor_node --ros-args \
+ros2 run ros2_driver iphone_sensor_node --ros-args \
   -p host:=<IP> -p publish_pointcloud:=false -p publish_aligned_depth:=false
 ```
 

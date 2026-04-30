@@ -1,5 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -18,9 +19,11 @@ def generate_launch_description():
         DeclareLaunchArgument("publish_aligned_depth", default_value="true"),
         DeclareLaunchArgument("publish_confidence", default_value="true"),
         DeclareLaunchArgument("publish_imu", default_value="true"),
+        DeclareLaunchArgument("publish_scan", default_value="true",
+                              description="Start pointcloud_to_laserscan node to publish /scan"),
 
         # pointcloud_to_laserscan parameters
-        DeclareLaunchArgument("scan_target_frame", default_value="base_link",
+        DeclareLaunchArgument("scan_target_frame", default_value="camera_link",
                               description="Frame in which the scan is sliced and published; "
                                           "use a level frame so the scan plane stays level when the camera tilts"),
         DeclareLaunchArgument("scan_min_height", default_value="0.10",
@@ -58,6 +61,7 @@ def generate_launch_description():
             executable="pointcloud_to_laserscan_node",
             name="pointcloud_to_laserscan",
             output="screen",
+            condition=IfCondition(LaunchConfiguration("publish_scan")),
             remappings=[
                 ("cloud_in", "depth/color/points"),
                 ("scan", "scan"),
