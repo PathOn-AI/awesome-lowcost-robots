@@ -99,6 +99,7 @@ Each component has its own README with install, build, and run instructions:
 
 | Date | Release |
 |------|---------|
+| 2026-04-30 | ROS2 driver: 2D SLAM demo + `/scan` via `pointcloud_to_laserscan` (toggle: `publish_scan`) |
 | 2026-04-17 | New version of calibration (coming soon) |
 | 2026-04-07 | iOS app released on the [App Store](https://apps.apple.com/app/id6761314229) |
 | 2026-03-09 | iPhone Sensor Suite open-sourced: Python SDK, ROS2 driver, and ArUco calibration |
