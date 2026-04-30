@@ -33,6 +33,8 @@ https://www.loom.com/share/903ef7a126844111a8025947679171dd
 
 *Mapping stage: iPhone-as-2D-LiDAR feeding 2D SLAM.*
 
+**Hold the iPhone vertically** (screen perpendicular to the ground, lens pointing horizontally) while scanning. The default launch slices points between 0.10–0.80 m in the body-fixed `camera_link` frame, so tilting the phone tilts the slice plane and breaks 2D SLAM's flat-scan assumption. When mounting the iPhone on a robot, pass `scan_target_frame:=base_link` (or any other gravity-aligned frame your robot publishes) for a tilt-tolerant scan.
+
 ## Overview
 
 The iPhone LiDAR (dToF flash sensor) + RGB camera + IMU replaces multiple traditional robot sensors:
