@@ -6,15 +6,19 @@ Python client for receiving real-time RGBD data from the iPhone sensor iOS app.
 
 ```bash
 cd sdk
-pip install -r requirements.txt
-```
+python3 -m venv venv
+source venv/bin/activate
 
-Or install as package:
-```bash
+# Core SDK only
 pip install -e .
+
+# With Open3D for the point cloud example
+pip install -e ".[visualization]"
 ```
 
 ## Quick Start
+
+Make sure the iOS streaming app is running on your iPhone — the app screen shows the IP you'll pass below.
 
 ```python
 from sdk import IPhoneSensorClient
@@ -36,14 +40,18 @@ client.stop()
 
 ## Examples
 
-### OpenCV Viewer
 ```bash
+# RGB + depth side-by-side (OpenCV)
 python examples/simple_viewer.py <IPHONE_IP>
-```
 
-### Open3D Point Cloud
-```bash
+# Same viewer rotated for landscape orientation
+python examples/landscape_viewer.py <IPHONE_IP>
+
+# Live colored point cloud (requires the [visualization] extra)
 python examples/point_cloud.py <IPHONE_IP>
+
+# Protocol v2 fields: confidence map + IMU
+python examples/test_v2.py <IPHONE_IP>
 ```
 
 ## API Reference

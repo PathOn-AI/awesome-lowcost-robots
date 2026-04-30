@@ -8,14 +8,6 @@ ROS2 Jazzy package that receives RGBD data from the iPhone sensor iOS app and pu
 - iPhone sensor iOS app running on an iPhone Pro (12 Pro or newer)
 - iPhone and host machine on the same WiFi network
 
-## Demo
-
-Using the iPhone's LiDAR as a drop-in replacement for a 2D laser scanner. The `/scan` topic produced by `pointcloud_to_laserscan` (started by the launch file) feeds a standard 2D SLAM pipeline.
-
-https://www.loom.com/share/903ef7a126844111a8025947679171dd
-
-*Mapping stage: iPhone-as-2D-LiDAR feeding 2D SLAM.*
-
 ## Setup
 
 ```bash
