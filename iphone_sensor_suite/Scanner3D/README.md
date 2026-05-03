@@ -8,6 +8,10 @@ https://www.loom.com/share/b4a0ab5e65ce4debafca076c697b67ae
 
 *Visualization of the fused point cloud in marker frame.*
 
+https://www.loom.com/share/dc6d9b6e6215488fb55b152fd6bb4fec
+
+*3D Gaussian Splatting reconstruction from a Scanner3D capture, viewed in the web viewer.*
+
 ## iOS App
 
 Download the free iOS scanning app:
