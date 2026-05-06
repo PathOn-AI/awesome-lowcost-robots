@@ -1,0 +1,7 @@
+# mjcf-to-urdf — runtime requirements
+#
+# `mjcf-urdf-simple-converter` does the actual conversion;
+# `mujoco` is needed to verify the output parses.
+
+mujoco>=3.5
+mjcf-urdf-simple-converter
