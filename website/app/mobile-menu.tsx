@@ -53,7 +53,7 @@ export function MobileMenu() {
             <div className="flex items-center gap-5 pt-2">
               <a href="https://github.com/PathOn-AI" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-green-600" aria-label="GitHub"><FaGithub className="h-5 w-5" /></a>
               <a href="https://www.linkedin.com/company/path-on/" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-green-600" aria-label="LinkedIn"><FaLinkedin className="h-5 w-5" /></a>
-              <a href="https://x.com/pathonai" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-green-600" aria-label="Twitter"><FaTwitter className="h-5 w-5" /></a>
+              <a href="https://x.com/PathOn_Robotics" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-green-600" aria-label="Twitter"><FaTwitter className="h-5 w-5" /></a>
               <a href="https://discord.gg/xukJ3nh9wC" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-green-600" aria-label="Discord"><FaDiscord className="h-5 w-5" /></a>
             </div>
           </div>
