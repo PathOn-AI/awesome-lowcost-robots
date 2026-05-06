@@ -1,0 +1,10 @@
+# urdf-to-mjcf — runtime requirements
+#
+# MuJoCo's URDF loader is built into the `mujoco` package; the
+# `mjcf-urdf-simple-converter` shim wraps it for the script's CLI.
+# `lxml` is for the post-tune XML rewrites (adding equality blocks,
+# rescaling inertias, injecting actuators) without losing comments.
+
+mujoco>=3.5
+mjcf-urdf-simple-converter
+lxml>=4.9

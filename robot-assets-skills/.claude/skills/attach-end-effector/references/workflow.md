@@ -1,0 +1,201 @@
+# `attach-end-effector` Workflow
+
+Full step-by-step procedure for combining an arm and an end-effector
+into a single MJCF model. Pair this with `gotchas.md` — every step has
+a known way to go wrong.
+
+## Preflight
+
+1. Confirm the arm has `<site name="attachment_site" .../>` in its
+   wrist link with `pos`/`quat` defining the wrist flange frame. For
+   `piper_arm`, this is at link6 with `pos="0 0 0" quat="1 0 0 0"`.
+2. Confirm the end-effector MJCF compiles standalone:
+   ```bash
+   ./.venv/bin/python -c "
+   import mujoco
+   m = mujoco.MjModel.from_xml_path('robots/<eef>/<eef>.xml')
+   print('eef nq=', m.nq, 'nu=', m.nu)
+   "
+   ```
+3. Confirm MuJoCo Python is ≥ 3.5 (see `gotchas.md` §5).
+4. **Predict the prefix.** Default to a non-empty prefix. Empty prefix
+   has two failure modes (entity-name collisions AND bare nested
+   `<default>` blocks); see `gotchas.md` §3 for the two `grep` checks
+   that decide whether empty is actually safe. When in doubt, use a
+   non-empty prefix — the cost is zero.
+5. **Predict the pos offset.** Inspect the eef root body's collision
+   geometry. If it extends into z<0 in palm frame, plan a `pos="0 0 H"`
+   override (typically H ≈ -min(palm collision z)). See `gotchas.md`
+   §2.
+6. **Read the eef's `<compiler meshdir>`.** The attach script assumes
+   `<eef>/assets/`. If the gripper's compiler element points elsewhere
+   (e.g. `meshes`, unset, etc.), the script silently copies zero
+   gripper meshes. See `gotchas.md` §4 for the parse + copy recipe;
+   you'll need it in Fix 1 below.
+
+## Attach
+
+The bundle's venv is at `robot-assets-skills/.venv/`. The wrapped
+script `attach_arm_gripper.py` lives in the parent repo at
+`../attach_arm_gripper.py`. The script resolves relative `--arm` /
+`--gripper` / `--output` paths against its own directory (the parent
+repo), so we pass **absolute** paths via `$(pwd)/` to make the bundle's
+`robots/` the working directory.
+
+```bash
+cd robot-assets-skills/
+./.venv/bin/python ../attach_arm_gripper.py \
+    --arm     "$(pwd)/robots/<arm>/<arm>.xml" \
+    --gripper "$(pwd)/robots/<eef>/<eef>.xml" \
+    --output  "$(pwd)/robots/<arm>_<eef>" \
+    --prefix  "<prefix>_" \
+    --no-viewer
+```
+
+The script writes:
+
+- `robots/<arm>_<eef>/<arm>_<eef>.xml` — the combined MJCF
+- `robots/<arm>_<eef>/<arm>_<eef>.mjb` — binary cache (often >50 MB,
+  triggers GitHub LFS warning; see repo `.mjb` policy)
+- `robots/<arm>_<eef>/scene.xml` — wraps the MJCF with a floor +
+  lighting for viewer use
+- `robots/<arm>_<eef>/README.md` — generated description
+- `robots/<arm>_<eef>/assets/` — merged mesh dir from arm + eef
+
+## Post-attach fixes
+
+### Fix 1: gripper mesh copy (always run — script's stdout will lie)
+
+The script reports "Copying mesh assets..." but only actually copies
+files from the *arm's* `assets/` dir if the gripper's mesh dir isn't
+literally `assets/`. See `gotchas.md` §4. Always do this:
+
+```bash
+# Resolve the gripper's actual mesh dir from its <compiler meshdir="...">
+EEF_XML=robots/<eef>/<eef>.xml
+EEF_MESHDIR=$(./.venv/bin/python -c "
+import xml.etree.ElementTree as ET, pathlib
+xml = pathlib.Path('$EEF_XML')
+comp = ET.parse(xml).getroot().find('compiler')
+md = (comp.get('meshdir') if comp is not None else None) or '.'
+print((xml.parent / md).resolve())
+")
+cp -n "$EEF_MESHDIR"/* robots/<arm>_<eef>/assets/
+```
+
+`cp -n` (no-clobber) preserves anything copied by the script and any
+prefix-renamed files from Fix 2 below.
+
+Sanity-check the merged dir picked up the eef meshes:
+
+```bash
+echo "arm:      $(ls robots/<arm>/assets/ | wc -l)"
+echo "eef:      $(ls "$EEF_MESHDIR" | wc -l)"
+echo "combined: $(ls robots/<arm>_<eef>/assets/ | wc -l)"
+# combined should equal arm + eef (minus same-name overwrites — see Fix 2)
+```
+
+### Fix 2: mesh-filename collisions (always check)
+
+```bash
+# List any size mismatches between source eef assets and merged combined assets
+python3 -c "
+from pathlib import Path
+eef = Path('$EEF_MESHDIR')  # resolved by Fix 1 above
+combined = Path('robots/<arm>_<eef>/assets')
+for f in eef.iterdir():
+    cf = combined / f.name
+    if cf.exists() and cf.stat().st_size != f.stat().st_size:
+        print('COLLISION:', f.name, f.stat().st_size, '->', cf.stat().st_size)
+"
+```
+
+For each collision: see `gotchas.md` §1 fix.
+
+### Fix 3: pos offset (when end-effector clips into the arm)
+
+Edit the combined MJCF in-place to add the pos offset on the prefixed
+root body:
+
+```bash
+sed -i 's|<body name="<prefix>_<root>" childclass="<prefix>_<class>" quat="<auto-quat>">|<body name="<prefix>_<root>" childclass="<prefix>_<class>" pos="0 0 <H>" quat="1 0 0 0">|' \
+    robots/<arm>_<eef>/<arm>_<eef>.xml
+```
+
+See `gotchas.md` §2 for the per-end-effector H values.
+
+## Verify
+
+1. **Compile + count check:**
+   ```bash
+   ./.venv/bin/python -c "
+   import mujoco
+   m = mujoco.MjModel.from_xml_path('robots/<arm>_<eef>/<arm>_<eef>.xml')
+   print('combined nq=', m.nq, 'nu=', m.nu, 'nbody=', m.nbody)
+   for i in range(m.nu):
+       print(' ', i, m.actuator(i).name)
+   "
+   ```
+   Expected: `nq = arm.nq + eef.nq`, `nu = arm.nu + eef.nu`, all
+   actuator names prefixed correctly.
+
+2. **Visual check** (must — collisions and pos offsets are visual bugs
+   that compile cleanly):
+   ```bash
+   DISPLAY=:5 ./.venv/bin/python -m mujoco.viewer \
+       --mjcf robots/<arm>_<eef>/scene.xml
+   ```
+   Drag actuator sliders to confirm:
+   - Arm joints move only the arm.
+   - End-effector joints move only the end-effector.
+   - End-effector mounts flush at the wrist flange (no gap, no clipping).
+   - Visual geometry looks correct (no "mystery box" — that's a mesh
+     collision; see `gotchas.md` §1).
+
+## Register
+
+Drop a `robot.json` in `robots/<arm>_<eef>/`. Mjcf-only registration
+per the `ur5e`/`piper`/`barrett` convention:
+
+```json
+{
+  "robot": {
+    "name": "pathonai/<arm>-<eef>",
+    "display_name": "<Arm> + <Eef>",
+    "description": "<arm> with <eef> mounted at the wrist (combined system)",
+    "visibility": "official",
+    "is_verified": true,
+    "is_featured": false
+  },
+  "version": {
+    "version": "1.0.0",
+    "is_stable": true,
+    "dof": <arm.dof + eef.dof>,
+    "motor_type": "<arm.motor_type>",
+    "designer": "PathOn AI",
+    "urdf_file": null,
+    "mjcf_file": "<arm>_<eef>.xml",
+    "meshes_dir": "assets",
+    "changelog": "Initial release - <arm> v<v> + <eef> v<v> via attach_arm_gripper.py with prefix '<prefix>_'. <Notes on any pos/mesh-rename fixes applied.>"
+  }
+}
+```
+
+## Commit (when registering the combined model upstream)
+
+The bundle's `robots/` is gitignored — nothing here gets committed
+from inside the bundle. To *register* a combined model in the parent
+repo (`pathonai_robot_assets`), copy the combined folder out:
+
+```bash
+cp -r robots/<arm>_<eef>/ ../robots/<arm>_<eef>/
+cd ..
+git add robots/<arm>_<eef>/
+git commit -m "Add <arm>_<eef> combined model"
+git push origin main
+```
+
+The combined `.mjb` is large (~50–80 MB). Current parent-repo policy
+is to commit it (matching `piper_arm_barrett`); GitHub will warn but
+accept. If `.mjb` ever gets gitignored, document the regen recipe in
+the combined `README.md`.

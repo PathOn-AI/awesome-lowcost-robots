@@ -1,0 +1,13 @@
+# Bundle-local venv (bootstrap from AGENTS.md)
+.venv/
+
+# User-populated robot assets (copy your arm + end-effector folders here)
+robots/
+
+# Python
+__pycache__/
+*.pyc
+
+# MuJoCo
+MUJOCO_LOG.TXT
+MJMODEL.TXT

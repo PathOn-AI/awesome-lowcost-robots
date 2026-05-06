@@ -1,0 +1,9 @@
+# attach-end-effector — runtime requirements
+#
+# The skill calls MjSpec.attach() (>=3.5) and then post-processes the
+# resulting XML, so the only runtime dep is mujoco itself. lxml is for
+# the post-attach XML rewrite (mesh-rename + pos offset) without
+# touching the rest of the document.
+
+mujoco>=3.5
+lxml>=4.9
