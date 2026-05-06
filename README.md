@@ -16,6 +16,7 @@ Step-by-step tutorials at https://www.pathon.ai/blog
 |---|---|---|
 | **SO-101 6DoF + Symmetric Gripper** | 6DoF wrist upgrade and symmetric parallel-jaw gripper for the SO-101 arm — hardware files, assembly guide | [so101_6dof_symmetric_gripper/](so101_6dof_symmetric_gripper/) |
 | **iPhone Sensor Suite** | Use iPhone as a full sensor suite (LiDAR, RGB, IMU) for robot manipulation and navigation — includes Python SDK, ROS2 driver, and calibration | [iphone_sensor_suite/](iphone_sensor_suite/) |
+| **Livox Mid-360 Mount for Unitree Go2** | 3D-printable cantilever bracket that mounts a Livox Mid-360 LiDAR forward of the Go2's head for unobstructed 360° FOV | [livox_mid360_go2_mount/](livox_mid360_go2_mount/) |
 
 ## Resources
 
