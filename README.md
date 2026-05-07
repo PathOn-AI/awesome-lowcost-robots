@@ -4,7 +4,7 @@
 [![followers](https://custom-icon-badges.demolab.com/github/followers/PathOn-AI?color=236ad3&labelColor=1155ba&style=for-the-badge&logo=person-add&label=Follow&logoColor=white)](https://github.com/PathOn-AI?tab=followers)
 [![stars](https://custom-icon-badges.demolab.com/github/stars/PathOn-AI/pathon_opensource?color=55960c&style=for-the-badge&labelColor=488207&logo=star)](https://github.com/PathOn-AI/pathon_opensource/stargazers)
 
-Open-source tools and resources by [Pathon Robotics](https://www.pathon.ai) for building and controlling low-cost robots.
+Open-source tools and resources by [Pathon Robotics](https://www.pathon.ai) for building and controlling real robots.
 
 **Website**: https://www.pathon.ai/opensource
 
@@ -17,6 +17,7 @@ Step-by-step tutorials at https://www.pathon.ai/blog
 | **SO-101 6DoF + Symmetric Gripper** | 6DoF wrist upgrade and symmetric parallel-jaw gripper for the SO-101 arm — hardware files, assembly guide | [so101_6dof_symmetric_gripper/](so101_6dof_symmetric_gripper/) |
 | **iPhone Sensor Suite** | Use iPhone as a full sensor suite (LiDAR, RGB, IMU) for robot manipulation and navigation — includes Python SDK, ROS2 driver, and calibration | [iphone_sensor_suite/](iphone_sensor_suite/) |
 | **Livox Mid-360 Mount for Unitree Go2** | 3D-printable cantilever bracket that mounts a Livox Mid-360 LiDAR forward of the Go2's head for unobstructed 360° FOV | [livox_mid360_go2_mount/](livox_mid360_go2_mount/) |
+| **Robot Assets Skills** | Claude Code skill bundle for working with robot URDF/MJCF assets — attach end-effectors via MuJoCo MjSpec, convert URDF↔MJCF, with the post-processing fixups the underlying scripts don't handle | [robot-assets-skills/](robot-assets-skills/) |
 
 ## Resources
 
