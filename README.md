@@ -4,7 +4,7 @@
 [![followers](https://custom-icon-badges.demolab.com/github/followers/PathOn-AI?color=236ad3&labelColor=1155ba&style=for-the-badge&logo=person-add&label=Follow&logoColor=white)](https://github.com/PathOn-AI?tab=followers)
 [![stars](https://custom-icon-badges.demolab.com/github/stars/PathOn-AI/pathon_opensource?color=55960c&style=for-the-badge&labelColor=488207&logo=star)](https://github.com/PathOn-AI/pathon_opensource/stargazers)
 
-Open-source tools and resources by [Pathon Robotics](https://www.pathon.ai) for building and controlling real robots.
+Open-source tools and resources by [Pathon Robotics](https://www.pathon.ai) — joint work with [PathOnAI.org](https://www.pathonai.org) — for building and controlling real robots.
 
 **Website**: https://www.pathon.ai/opensource
 
