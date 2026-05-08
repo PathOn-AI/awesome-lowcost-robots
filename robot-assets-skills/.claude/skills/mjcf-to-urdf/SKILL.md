@@ -67,9 +67,6 @@ wrong results.
    `package://` or relative-to-URDF conventions. Manually inspect.
 5. **Document what was lost** in the URDF's leading comment so future
    readers know they're looking at a partial representation.
-6. (Optional) Drop a `robot.json` if registering upstream — but URDF
-   from MJCF conversion typically isn't registered as the canonical;
-   it's a derived artifact for one consumer.
 
 ## Commands
 

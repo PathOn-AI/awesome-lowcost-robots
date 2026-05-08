@@ -146,23 +146,3 @@ MJCF source if needed.
 
    FK mismatches mean either mesh-frame discrepancies or dropped
    `<equality>` (the simulated joints are different).
-
-## Register (rarely)
-
-URDFs auto-converted from MJCF typically aren't registered upstream
-as the canonical URDF — they're derived artifacts for one consumer.
-If you do register one, document the conversion in the changelog:
-
-```json
-{
-  "version": {
-    "version": "1.0.0-derived",
-    "is_stable": false,
-    "urdf_file": "<robot>.urdf",
-    "changelog": "Auto-converted from <robot>.xml (MJCF) via mjcf-to-urdf skill. LOSSY — see leading comment in URDF for details. For kinematic use only."
-  }
-}
-```
-
-`is_stable: false` is intentional; consumers should know this URDF is
-derived.

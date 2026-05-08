@@ -56,36 +56,37 @@ shared `.venv`".
 
 ## Bundle conventions
 
-- **`robots/` is user-populated.** It's gitignored. Each user copies
-  their arm folder and end-effector folder in before running the
-  skills. See `README.md` "First-time setup".
+- **`robots/` is user-populated, with two example inputs shipped.**
+  `robots/piper_arm/` and `robots/allegro_right/` are tracked in git as
+  ready-to-use example inputs. Everything else under `robots/` is
+  gitignored — generated combined-model folders, and any extra
+  arm/end-effector folders users drop in. See `README.md`
+  "First-time setup".
 - **Folder name == MJCF name.** `piper_arm/` contains `piper_arm.xml`.
   Skills assume this; don't rename one without the other.
 - **`<site name="attachment_site"/>` on the arm.** Arms expose this
   site at the wrist flange. End-effectors mount at this site via the
   `attach-end-effector` skill.
-- **MJCF-only registration** is the convention for combined models:
-  `robot.json` with `urdf_file: null`, `mjcf_file: <name>.xml`,
-  `meshes_dir: assets`. Combined `<arm>_<eef>/` folders generally
-  don't ship a URDF.
-- **Headless display:** if running on a headless box with X on `:5`,
-  prefix viewer commands with `DISPLAY=:5`.
+- **Combined models are MJCF-only.** Combined `<arm>_<eef>/` folders
+  generally don't ship a URDF.
+- **Headless display:** if running on a headless box, set `DISPLAY`
+  to your X session (e.g. a VNC display) in your shell before running
+  viewer commands. Skill examples assume `$DISPLAY` is already set.
 
 ## Source of truth
 
-- The wrapped Python scripts (e.g. `attach_arm_gripper.py`) are
+- The wrapped Python scripts (e.g. `attach_arm_end_effector.py`) are
   authoritative. Skills add a workflow + gotcha layer; they don't
   replace the script.
-- `robots/<robot>/robot.json` is the registration record. The
-  `mjcf_file` / `urdf_file` / `meshes_dir` fields drive downstream
-  consumers (S3 sync, registration db, etc.).
 - Prefer hand-tuned upstream MJCFs (e.g. `mujoco_menagerie`) over
   running an auto-converter when an upstream MJCF exists.
 
 ## Repo policies
 
-- Never commit `.venv/` or `robots/` from this bundle (both are in
-  `.gitignore`).
+- Never commit `.venv/` or generated/user-added folders under
+  `robots/` from this bundle. Only the two example inputs
+  (`robots/piper_arm/`, `robots/allegro_right/`) are tracked; see
+  `.gitignore`.
 - Combined `.mjb` binary caches are typically 50–80 MB; current policy
   is to commit them when the combined model is registered as a
   released robot, but they're not required at the bundle level.

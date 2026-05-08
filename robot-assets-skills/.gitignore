@@ -1,8 +1,12 @@
 # Bundle-local venv (bootstrap from AGENTS.md)
 .venv/
 
-# User-populated robot assets (copy your arm + end-effector folders here)
-robots/
+# Robot assets. piper_arm/ and allegro_right/ ship with the bundle as
+# example inputs; everything else under robots/ (other user-populated
+# inputs, generated combined-model folders) is ignored.
+robots/*
+!robots/piper_arm/
+!robots/allegro_right/
 
 # Python
 __pycache__/

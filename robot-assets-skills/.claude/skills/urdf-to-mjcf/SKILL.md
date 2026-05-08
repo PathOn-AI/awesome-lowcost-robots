@@ -66,8 +66,6 @@ the step-by-step is in `references/workflow.md`.
 5. **Verify in the viewer.** Each actuator slider should drive the
    intended joint(s) to the commanded angle without numerical
    blowup or contact-blocked motion.
-6. Drop a `robot.json` (mjcf registration; if URDF + MJCF use
-   different mesh dirs, set `urdf_file: null` per ur5e/piper convention).
 
 ## Commands
 
@@ -105,10 +103,10 @@ print('nq=', m.nq, 'nu=', m.nu, 'nbody=', m.nbody)
 that's one of the post-tune fixes. After fixing, `nu` should equal the
 number of actuated joints.
 
-View interactively to drive the sliders (`DISPLAY=:5` on our headless box):
+View interactively to drive the sliders (set `$DISPLAY` first if headless — see `AGENTS.md`):
 
 ```bash
-DISPLAY=:5 ./.venv/bin/python -m mujoco.viewer \
+./.venv/bin/python -m mujoco.viewer \
     --mjcf robots/<robot>/<robot>.xml
 ```
 

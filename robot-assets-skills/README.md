@@ -21,7 +21,7 @@ robot-assets-skills/
 ├── README.md                              ← this file
 ├── AGENTS.md                              ← skill routing + Python env
 ├── CLAUDE.md                              ← points at AGENTS.md
-├── .gitignore                             ← ignores .venv/ and robots/
+├── .gitignore                             ← ignores .venv/ and robots/* (except the two example inputs below)
 ├── .venv/                                 ← bundle-local venv (bootstrap below)
 ├── .claude/skills/                        ← skill definitions
 │   ├── attach-end-effector/
@@ -36,23 +36,25 @@ robot-assets-skills/
 │       ├── SKILL.md
 │       ├── requirements.txt
 │       └── references/{workflow,gotchas}.md
-└── robots/                                ← you populate this (gitignored)
-    ├── <arm-name>/                        ← part 1: copy in your arm
-    │   ├── <arm-name>.xml                 MJCF — required, must have <site name="attachment_site"/>
-    │   ├── <arm-name>.urdf                URDF — optional, for RViz/pinocchio
-    │   ├── assets/                        STL/OBJ meshes referenced by the MJCF
-    │   └── robot.json                     registration metadata — optional
-    ├── <eef-name>/                        ← part 2: copy in your end-effector
-    │   ├── <eef-name>.xml                 MJCF — required
-    │   ├── assets/  or  meshes/           depends on the source (see gotchas §4)
-    │   └── robot.json
-    └── <arm-name>_<eef-name>/             ← part 3: created by the skill
-        ├── <arm-name>_<eef-name>.xml      combined MJCF
-        ├── <arm-name>_<eef-name>.mjb      binary cache (large)
+└── robots/                                ← user-populated; two example inputs ship with the bundle
+    ├── piper_arm/                         ← example arm input (tracked)
+    │   ├── piper_arm.xml                  MJCF — has <site name="attachment_site"/> at the wrist
+    │   ├── piper_arm.urdf                 URDF — optional, for RViz/pinocchio
+    │   ├── assets/                        STL meshes referenced by the MJCF
+    │   └── meshes/                        STL meshes referenced by the URDF
+    ├── allegro_right/                     ← example end-effector input (tracked)
+    │   ├── allegro_right.xml              MJCF — required
+    │   ├── allegro_right.urdf             URDF — optional
+    │   ├── assets/                        STL meshes (matches <compiler meshdir="assets">)
+    │   └── meshes/                        STL meshes referenced by the URDF
+    ├── <your-arm>/                        ← (optional) drop in your own arm — gitignored
+    ├── <your-eef>/                        ← (optional) drop in your own end-effector — gitignored
+    └── <arm>_<eef>/                       ← created by the skill — gitignored
+        ├── <arm>_<eef>.xml                combined MJCF
+        ├── <arm>_<eef>.mjb                binary cache (large)
         ├── scene.xml                      wraps the MJCF for viewer use
         ├── assets/                        merged meshes from arm + eef
-        ├── README.md                      generated description
-        └── robot.json                     you write this last
+        └── README.md                      generated description
 ```
 
 ### Conventions
@@ -90,9 +92,14 @@ Verify:
 # Expect >= 3.5
 ```
 
-### 2. Populate `robots/` with your two parts
+### 2. (Optional) populate `robots/` with your own parts
 
-Copy your arm folder and end-effector folder into `robots/`:
+The bundle ships with two example inputs already in `robots/`:
+`piper_arm/` (6-DOF arm with `attachment_site` at the wrist) and
+`allegro_right/` (16-DOF dexterous hand). You can run the skills
+against these straight away.
+
+To use your own arm or end-effector instead, drop them in alongside:
 
 ```bash
 cp -r /path/to/your/arm     robots/<arm-name>/
@@ -100,9 +107,10 @@ cp -r /path/to/your/eef     robots/<eef-name>/
 ```
 
 Each folder must follow the structure under "Directory structure"
-above (folder name matches the `.xml` name, `assets/` directory present).
+above (folder name matches the `.xml` name, `assets/` directory
+present). User-added folders are gitignored.
 
-Confirm both compile standalone before you attach:
+Confirm the parts you'll attach compile standalone:
 
 ```bash
 ./.venv/bin/python -c "

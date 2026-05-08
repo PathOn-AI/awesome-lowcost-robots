@@ -182,25 +182,3 @@ dexterous-hand sim:
 
 Add these to the converted MJCF's `<compiler>` and `<option>` elements.
 
----
-
-## Mesh directory split convention
-
-URDF often uses `meshes/`, MuJoCo often uses `assets/`. If your URDF
-references `meshes/<file>.STL` and your MJCF will reference
-`assets/<file>.stl`, the registration in `robot.json` can't list both
-in `meshes_dir`. Convention from `ur5e`/`piper`/`barrett`:
-
-```json
-{
-  "version": {
-    "urdf_file": null,
-    "mjcf_file": "<robot>.xml",
-    "meshes_dir": "assets"
-  }
-}
-```
-
-Set `urdf_file: null` (URDF stays on disk for RViz/pinocchio
-consumers but isn't registered upstream). See `pathonai_robot_assets`
-issue #40 for the schema gap that drove this convention.

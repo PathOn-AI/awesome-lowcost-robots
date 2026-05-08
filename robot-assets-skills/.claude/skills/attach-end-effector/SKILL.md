@@ -1,30 +1,30 @@
 ---
 name: attach-end-effector
-description: Mount an end-effector (parallel-jaw gripper, dexterous hand, suction tool, etc.) on a robot arm by attaching its MJCF to the arm's `attachment_site` via MuJoCo's MjSpec API. Use when combining an arm MJCF and an end-effector MJCF into a single combined model (e.g. piper_arm + barrett -> piper_arm_barrett). Handles known gotchas the underlying script doesn't: same-named mesh files silently overwriting each other, end-effectors whose root body origin sits on the wrong face for wrist mounting, empty-prefix failures (entity-name collisions and bare nested `<default>` blocks), and the script silently skipping gripper meshes when the gripper's `<compiler meshdir>` isn't `assets/`.
+description: Mount an end-effector (parallel-jaw gripper, dexterous hand, suction tool, etc.) on a robot arm by attaching its MJCF to the arm's `attachment_site` via MuJoCo's MjSpec API. Use when combining an arm MJCF and an end-effector MJCF into a single combined model. Handles known gotchas the underlying script doesn't: same-named mesh files silently overwriting each other, end-effectors whose root body origin sits on the wrong face for wrist mounting, empty-prefix failures (entity-name collisions and bare nested `<default>` blocks), and the script silently skipping eef meshes when the eef's `<compiler meshdir>` isn't `assets/`.
 ---
 
 # attach-end-effector
 
-Wrap `attach_arm_gripper.py` (despite the file name, it works for any
-end-effector — gripper, dex hand, suction, sensor mount). The script
-loads two MJCFs as `MjSpec`, attaches the end-effector at the arm's
+Wrap `attach_arm_end_effector.py`. The script loads two MJCFs as
+`MjSpec`, attaches the end-effector at the arm's
 `<site name="attachment_site"/>` with a name prefix, compiles, and
 writes a combined `<output>.xml` + `<output>.mjb` + `scene.xml` +
 `README.md` under `robots/<output>/`.
 
 The script gets the kinematic attach right but does **not** handle:
 
-1. Mesh-filename collisions between arm and end-effector mesh dirs
-   (e.g. piper and allegro both ship `base_link.stl` — the second copy
-   is silently dropped, mesh refs resolve to the wrong geometry).
+1. Mesh-filename collisions between arm and end-effector mesh dirs —
+   when both ship a same-named STL/OBJ (e.g. `base_link.stl`), the
+   second copy is silently dropped and mesh refs resolve to the wrong
+   geometry.
 2. End-effectors whose root body's origin is on the wrong face of the
-   palm for wrist mounting (menagerie hands place the origin at the
-   front face, so the body extends *into* the arm under identity quat).
+   palm for wrist mounting (some hands place the origin at the front
+   face, so the body extends *into* the arm under identity quat).
 3. Empty-prefix failures: entity-name collisions (`repeated name 'X'`)
    AND bare nested `<default>` blocks in the eef source (`empty class
    name`). Internal namespacing only protects against the first.
 4. End-effectors whose `<compiler meshdir>` isn't `assets/` — the
-   script hard-codes the gripper mesh source, silently copies zero
+   script hard-codes the eef mesh source, silently copies zero
    meshes, and emits no warning. Compile fails on missing mesh files.
 
 These are addressed in `references/gotchas.md` and the post-script
@@ -35,8 +35,8 @@ checklist in `references/workflow.md`.
 - Combining any arm + end-effector pair where both ship a standalone
   MJCF and the arm exposes `<site name="attachment_site"/>` at its
   wrist flange.
-- The output goes into `robots/<arm>_<eef>/` as a combined model
-  consumed by `mjcf_file:` in `robot.json`.
+- The output goes into `robots/<arm>_<eef>/` as a combined MJCF model
+  (with merged `assets/`).
 
 ## When NOT to use this skill
 
@@ -55,38 +55,37 @@ checklist in `references/workflow.md`.
    the first. See `references/gotchas.md` §3 for the two `grep` checks
    that justify empty if you really want it.
 3. Run the script (see Commands).
-4. **Verify gripper meshes were actually copied.** The script
-   hard-codes `<eef>/assets/` as the source; if the gripper's
-   `<compiler meshdir>` is anything else (e.g. barrett uses `meshes`),
-   zero gripper meshes get copied and the script emits no warning.
+4. **Verify end-effector meshes were actually copied.** The script
+   hard-codes `<eef>/assets/` as the source; if the end-effector's
+   `<compiler meshdir>` is anything else (e.g. `meshes`, unset, etc.),
+   zero eef meshes get copied and the script emits no warning.
    See `references/gotchas.md` §4 for the parse-meshdir + `cp` recipe.
 5. **Check for mesh-filename collisions in the merged `assets/`.** See
-   `references/gotchas.md` §1 (silent failure mode that bit us with
-   allegro_right + piper — both ship `base_link.stl`).
+   `references/gotchas.md` §1 — same-named STL/OBJ files between arm
+   and eef silently overwrite each other.
 6. **Check the end-effector mounts flush at the flange.** Open the
    combined `scene.xml` in MuJoCo viewer. If the eef body extends
    *into* the arm, set `pos="0 0 H"` on the prefixed root body so its
    back face sits at the wrist; see `references/gotchas.md` §2.
 7. Verify all combined actuators map to the intended joints (sliders
    in viewer should move the right things on both arm and eef).
-8. Drop a `robot.json` for the combined folder (mjcf-only registration,
-   `urdf_file: null`, `meshes_dir: assets`).
 
 ## Commands
 
 Run from the bundle root with the bundle-local venv. The wrapped
-script lives in the parent repo at `../attach_arm_gripper.py`.
-`attach_arm_gripper.py` resolves relative `--arm` / `--gripper` /
-`--output` paths against *its own* directory (the parent repo), not
-the bundle's `robots/` — so pass **absolute** paths via `$(pwd)/`.
+script ships in this skill at
+`.claude/skills/attach-end-effector/scripts/attach_arm_end_effector.py`.
+The script resolves relative `--arm` / `--end-effector` / `--output`
+paths against *its own* directory, so pass **absolute** paths via
+`$(pwd)/` to land outputs under the bundle's `robots/`.
 
 ```bash
 cd robot-assets-skills/
-./.venv/bin/python ../attach_arm_gripper.py \
-    --arm     "$(pwd)/robots/<arm>/<arm>.xml" \
-    --gripper "$(pwd)/robots/<eef>/<eef>.xml" \
-    --output  "$(pwd)/robots/<arm>_<eef>" \
-    --prefix  "<prefix>_" \
+./.venv/bin/python .claude/skills/attach-end-effector/scripts/attach_arm_end_effector.py \
+    --arm          "$(pwd)/robots/<arm>/<arm>.xml" \
+    --end-effector "$(pwd)/robots/<eef>/<eef>.xml" \
+    --output       "$(pwd)/robots/<arm>_<eef>" \
+    --prefix       "<prefix>_" \
     --no-viewer
 ```
 
@@ -100,10 +99,10 @@ print('nq=', m.nq, 'nu=', m.nu, 'nbody=', m.nbody)
 "
 ```
 
-View interactively (`DISPLAY=:5` on our headless box):
+View interactively (set `$DISPLAY` first if headless — see `AGENTS.md`):
 
 ```bash
-DISPLAY=:5 ./.venv/bin/python -m mujoco.viewer \
+./.venv/bin/python -m mujoco.viewer \
     --mjcf robots/<arm>_<eef>/scene.xml
 ```
 

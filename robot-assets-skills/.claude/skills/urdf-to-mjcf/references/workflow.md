@@ -131,7 +131,7 @@ per `gotchas.md` §5.
 3. **Viewer test** (must — most fix-ups are visual/dynamic, not
    compile-time):
    ```bash
-   DISPLAY=:5 ./.venv/bin/python -m mujoco.viewer \
+   ./.venv/bin/python -m mujoco.viewer \
        --mjcf robots/<robot>/<robot>.xml
    ```
    Drive each actuator to its limits. Confirm:
@@ -140,39 +140,9 @@ per `gotchas.md` §5.
    - No joint sticks partway (would indicate missing contact excludes).
    - No numerical blowup (would indicate bad inertia or integrator).
 
-## Register
+## Commit (when adding to the parent repo)
 
-Drop a `robot.json` in `robots/<robot>/`. Mjcf-only registration if
-URDF + MJCF use different mesh dirs (e.g. URDF in `meshes/`, MJCF in
-`assets/`):
-
-```json
-{
-  "robot": {
-    "name": "<owner>/<robot>",
-    "display_name": "<Robot display name>",
-    "description": "<short description>",
-    "visibility": "official",
-    "is_verified": true,
-    "is_featured": false
-  },
-  "version": {
-    "version": "1.0.0",
-    "is_stable": true,
-    "dof": <number of independent joints>,
-    "motor_type": "<motor type>",
-    "designer": "<original designer>",
-    "urdf_file": null,
-    "mjcf_file": "<robot>.xml",
-    "meshes_dir": "assets",
-    "changelog": "Initial release - hand-tuned MJCF from URDF source via urdf-to-mjcf skill. Added <equality> for N mimics, rescaled inertias, added M position actuators, palm-knuckle contact excludes, autolimits + implicitfast integrator."
-  }
-}
-```
-
-## Commit (when registering upstream)
-
-The bundle's `robots/` is gitignored. To register in the parent repo:
+The bundle's `robots/` is gitignored. To track the MJCF in the parent repo:
 
 ```bash
 cp -r robots/<robot>/ ../robots/<robot>/

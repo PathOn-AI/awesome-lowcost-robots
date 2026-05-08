@@ -23,10 +23,16 @@ a known way to go wrong.
    `<default>` blocks); see `gotchas.md` §3 for the two `grep` checks
    that decide whether empty is actually safe. When in doubt, use a
    non-empty prefix — the cost is zero.
-5. **Predict the pos offset.** Inspect the eef root body's collision
-   geometry. If it extends into z<0 in palm frame, plan a `pos="0 0 H"`
-   override (typically H ≈ -min(palm collision z)). See `gotchas.md`
-   §2.
+5. **Predict the pos offset.** Run the bundled helper to compute H
+   systematically (no eyeballing):
+   ```bash
+   ./.venv/bin/python .claude/skills/attach-end-effector/scripts/compute_wrist_offset.py \
+       robots/<eef>/<eef>.xml
+   ```
+   If it prints `H (collision-flush) > 0`, plan a `pos="0 0 H" quat="1 0 0 0"`
+   override on the prefixed root body in the combined XML (Fix 3 below).
+   If H = 0, no offset needed. See `gotchas.md` §2 for why
+   collision-flush is the right convention.
 6. **Read the eef's `<compiler meshdir>`.** The attach script assumes
    `<eef>/assets/`. If the gripper's compiler element points elsewhere
    (e.g. `meshes`, unset, etc.), the script silently copies zero
@@ -36,19 +42,19 @@ a known way to go wrong.
 ## Attach
 
 The bundle's venv is at `robot-assets-skills/.venv/`. The wrapped
-script `attach_arm_gripper.py` lives in the parent repo at
-`../attach_arm_gripper.py`. The script resolves relative `--arm` /
-`--gripper` / `--output` paths against its own directory (the parent
-repo), so we pass **absolute** paths via `$(pwd)/` to make the bundle's
-`robots/` the working directory.
+script `attach_arm_end_effector.py` ships in this skill at
+`.claude/skills/attach-end-effector/scripts/attach_arm_end_effector.py`.
+The script resolves relative `--arm` / `--end-effector` / `--output`
+paths against its own directory, so we pass **absolute** paths via
+`$(pwd)/` to make the bundle's `robots/` the working directory.
 
 ```bash
 cd robot-assets-skills/
-./.venv/bin/python ../attach_arm_gripper.py \
-    --arm     "$(pwd)/robots/<arm>/<arm>.xml" \
-    --gripper "$(pwd)/robots/<eef>/<eef>.xml" \
-    --output  "$(pwd)/robots/<arm>_<eef>" \
-    --prefix  "<prefix>_" \
+./.venv/bin/python .claude/skills/attach-end-effector/scripts/attach_arm_end_effector.py \
+    --arm          "$(pwd)/robots/<arm>/<arm>.xml" \
+    --end-effector "$(pwd)/robots/<eef>/<eef>.xml" \
+    --output       "$(pwd)/robots/<arm>_<eef>" \
+    --prefix       "<prefix>_" \
     --no-viewer
 ```
 
@@ -110,19 +116,22 @@ for f in eef.iterdir():
 "
 ```
 
-For each collision: see `gotchas.md` §1 fix.
+If any `COLLISION:` lines print, run `gotchas.md` §1 fix — it
+batches all collisions in one pass.
 
 ### Fix 3: pos offset (when end-effector clips into the arm)
 
-Edit the combined MJCF in-place to add the pos offset on the prefixed
-root body:
+Get H from `compute_wrist_offset.py` (the preflight step ran it
+already; re-run if you skipped). Then edit the combined MJCF in-place
+to add the pos offset on the prefixed root body:
 
 ```bash
 sed -i 's|<body name="<prefix>_<root>" childclass="<prefix>_<class>" quat="<auto-quat>">|<body name="<prefix>_<root>" childclass="<prefix>_<class>" pos="0 0 <H>" quat="1 0 0 0">|' \
     robots/<arm>_<eef>/<arm>_<eef>.xml
 ```
 
-See `gotchas.md` §2 for the per-end-effector H values.
+See `gotchas.md` §2 for why we use the collision-flush H, not the
+visual-union H.
 
 ## Verify
 
@@ -142,7 +151,7 @@ See `gotchas.md` §2 for the per-end-effector H values.
 2. **Visual check** (must — collisions and pos offsets are visual bugs
    that compile cleanly):
    ```bash
-   DISPLAY=:5 ./.venv/bin/python -m mujoco.viewer \
+   ./.venv/bin/python -m mujoco.viewer \
        --mjcf robots/<arm>_<eef>/scene.xml
    ```
    Drag actuator sliders to confirm:
@@ -152,39 +161,10 @@ See `gotchas.md` §2 for the per-end-effector H values.
    - Visual geometry looks correct (no "mystery box" — that's a mesh
      collision; see `gotchas.md` §1).
 
-## Register
-
-Drop a `robot.json` in `robots/<arm>_<eef>/`. Mjcf-only registration
-per the `ur5e`/`piper`/`barrett` convention:
-
-```json
-{
-  "robot": {
-    "name": "pathonai/<arm>-<eef>",
-    "display_name": "<Arm> + <Eef>",
-    "description": "<arm> with <eef> mounted at the wrist (combined system)",
-    "visibility": "official",
-    "is_verified": true,
-    "is_featured": false
-  },
-  "version": {
-    "version": "1.0.0",
-    "is_stable": true,
-    "dof": <arm.dof + eef.dof>,
-    "motor_type": "<arm.motor_type>",
-    "designer": "PathOn AI",
-    "urdf_file": null,
-    "mjcf_file": "<arm>_<eef>.xml",
-    "meshes_dir": "assets",
-    "changelog": "Initial release - <arm> v<v> + <eef> v<v> via attach_arm_gripper.py with prefix '<prefix>_'. <Notes on any pos/mesh-rename fixes applied.>"
-  }
-}
-```
-
-## Commit (when registering the combined model upstream)
+## Commit (when promoting the combined model upstream)
 
 The bundle's `robots/` is gitignored — nothing here gets committed
-from inside the bundle. To *register* a combined model in the parent
+from inside the bundle. To promote a combined model into the parent
 repo (`pathonai_robot_assets`), copy the combined folder out:
 
 ```bash
