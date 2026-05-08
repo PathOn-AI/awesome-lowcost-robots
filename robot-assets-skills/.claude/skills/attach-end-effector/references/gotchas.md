@@ -8,120 +8,206 @@ attach "done".
 
 ## 1. Mesh-filename collisions silently render the wrong geometry
 
-**Symptom.** End-effector visual looks completely wrong (wrong shape,
-wrong size, often a "huge mystery box" hovering near the wrist). Model
-compiles cleanly; `nq`/`nu` are as expected.
+**Symptom.** End-effector OR arm visual looks completely wrong (wrong
+shape, wrong size, often a "huge mystery box" hovering near the wrist),
+OR the model fails to compile with
+`Error: 'inertia must have positive eigenvalues'` — MuJoCo computed
+inertia from the wrong mesh content for that body.
 
-**Cause.** The script copies arm assets first, then end-effector
-assets, with `if not dest_file.exists(): copy`. If both arm and
-end-effector ship a STL/OBJ file with the **same filename**, the
-end-effector's version is *silently dropped* and its `<mesh file=...>`
-ref ends up resolving to the arm's mesh.
+**Two causes (same root issue, two directions).** The combined
+`assets/` dir ends up with a single file under a name that *both* the
+arm and the eef expect to map to *different* mesh content. Whichever
+mesh-ref happens to point at the wrong content sees garbage.
 
-**Concrete example we hit.** Piper arm's `base_link.stl` (535 KB,
-arm-base mesh) and allegro_right's `base_link.stl` (164 KB, palm mesh).
-The combined model's `<mesh name="right_base_link" file="base_link.stl"/>`
-silently rendered the piper arm-base as the allegro palm.
+- **Direction A (script-side, arm wins).** The script copies arm
+  assets first, then end-effector assets, with
+  `if not dest_file.exists(): copy`. If both arm and eef ship a
+  STL/OBJ with the same basename and the arm's version lands first,
+  the eef's version is silently dropped. The eef's `<mesh file=...>`
+  ref then resolves to the arm's mesh content. *Concrete example:*
+  Piper arm's `base_link.stl` (535 KB) and allegro_right's
+  `base_link.stl` (164 KB) — `<mesh name="right_base_link"
+  file="base_link.stl"/>` rendered the piper arm-base as the allegro
+  palm.
 
-**Detection.** After running the script, list `assets/` files and
-compare sizes:
+- **Direction B (post-script, eef wins).** When the arm's
+  `<compiler meshdir>` isn't `assets/`, the script's hardcoded copy
+  step finds zero arm meshes (gotcha §4), so the eef's meshes land
+  in the combined `assets/` first. After applying the §4 fix
+  (`cp -n` arm's meshdir → combined `assets/`), the eef's same-named
+  mesh is already there and the no-clobber `cp` skips the arm's
+  version. The arm's `<mesh file=...>` ref then resolves to the
+  eef's mesh content — frequently triggering the inertia error
+  above. *Concrete example:* SO101_6dof_arm + allegro_right — both
+  ship `base_link.stl`; the eef's 164KB palm mesh sat in combined
+  `assets/` and the arm's 1.1MB arm-base body inherited it,
+  producing degenerate inertia.
+
+**Detection.** Diff the combined `assets/` against BOTH the arm's
+mesh source AND the eef's mesh source. Any same-named file with a
+size mismatch on either side is a collision.
 
 ```bash
-diff <(stat -c '%n %s' robots/<arm>/assets/*) \
-     <(stat -c '%n %s' robots/<arm>_<eef>/assets/*)
+ARM_MESHDIR=$(./.venv/bin/python -c "
+import xml.etree.ElementTree as ET, pathlib
+xml = pathlib.Path('robots/<arm>/<arm>.xml')
+comp = ET.parse(xml).getroot().find('compiler')
+md = (comp.get('meshdir') if comp is not None else None) or '.'
+print((xml.parent / md).resolve())")
+EEF_MESHDIR=$(./.venv/bin/python -c "
+import xml.etree.ElementTree as ET, pathlib
+xml = pathlib.Path('robots/<eef>/<eef>.xml')
+comp = ET.parse(xml).getroot().find('compiler')
+md = (comp.get('meshdir') if comp is not None else None) or '.'
+print((xml.parent / md).resolve())")
+
+echo '--- arm vs combined ---'  # any size mismatch = Direction B
+diff <(stat -c '%n %s' "$ARM_MESHDIR"/* | sed 's|.*/||') \
+     <(stat -c '%n %s' robots/<arm>_<eef>/assets/*  | sed 's|.*/||')
+echo '--- eef vs combined ---'  # any size mismatch = Direction A
+diff <(stat -c '%n %s' "$EEF_MESHDIR"/* | sed 's|.*/||') \
+     <(stat -c '%n %s' robots/<arm>_<eef>/assets/*  | sed 's|.*/||')
 ```
 
-Any size mismatch on a same-named file is the bug.
-
-**Fix.** Handle every collision in one pass — the `base_link.stl` case
-above is just one instance of a general problem (any same-named mesh
-between arm and eef). For each colliding file, copy the eef's version
-into the combined `assets/` under a prefixed filename and rewrite the
-matching `<mesh ... file="...">` ref in the combined XML.
+**Fix.** For every collision, prefix-rename the EEF's copy in
+combined `assets/` and rewrite the eef's `<mesh file=...>` ref to
+point at the prefixed name. Then ensure the arm's correct mesh
+content sits at the bare basename. The snippet below handles both
+directions in one pass: it walks all eef meshes, prefix-renames any
+that collide with arm-side content (regardless of which version
+currently sits in combined), and overwrites the bare basename with
+the arm's version.
 
 ```bash
 # Inputs — adjust to your run
-PREFIX="<prefix>_"           # e.g. "right_" — must match the --prefix passed to the script
-ARM_EEF=<arm>_<eef>          # e.g. piper_arm_allegro_right
+PREFIX="<prefix>_"           # must match the --prefix passed to the script
+ARM_EEF=<arm>_<eef>          # e.g. so101_6dof_arm_allegro_right
+ARM_XML=robots/<arm>/<arm>.xml
 EEF_XML=robots/<eef>/<eef>.xml
 
-# Resolve eef meshdir (same recipe as §4 / workflow Fix 1)
+ARM_MESHDIR=$(./.venv/bin/python -c "
+import xml.etree.ElementTree as ET, pathlib
+xml = pathlib.Path('$ARM_XML')
+comp = ET.parse(xml).getroot().find('compiler')
+md = (comp.get('meshdir') if comp is not None else None) or '.'
+print((xml.parent / md).resolve())")
 EEF_MESHDIR=$(./.venv/bin/python -c "
 import xml.etree.ElementTree as ET, pathlib
 xml = pathlib.Path('$EEF_XML')
 comp = ET.parse(xml).getroot().find('compiler')
 md = (comp.get('meshdir') if comp is not None else None) or '.'
-print((xml.parent / md).resolve())
-")
+print((xml.parent / md).resolve())")
 
-PREFIX="$PREFIX" EEF_MESHDIR="$EEF_MESHDIR" ARM_EEF="$ARM_EEF" \
-./.venv/bin/python - <<'PYEOF'
+PREFIX="$PREFIX" ARM_MESHDIR="$ARM_MESHDIR" EEF_MESHDIR="$EEF_MESHDIR" \
+ARM_EEF="$ARM_EEF" ./.venv/bin/python - <<'PYEOF'
 import os, re, shutil
 from pathlib import Path
 
 prefix = os.environ['PREFIX']
+arm = Path(os.environ['ARM_MESHDIR'])
 eef = Path(os.environ['EEF_MESHDIR'])
 combined = Path('robots') / os.environ['ARM_EEF']
 assets = combined / 'assets'
 xml_path = combined / (combined.name + '.xml')
 
 text = xml_path.read_text()
-collisions = [f for f in eef.iterdir()
-              if (assets / f.name).exists()
-              and (assets / f.name).stat().st_size != f.stat().st_size]
+arm_files = {f.name: f for f in arm.iterdir()} if arm.exists() else {}
+collisions = []
+for f in eef.iterdir():
+    arm_match = arm_files.get(f.name)
+    if arm_match is None:
+        continue
+    # Same name on both sides; if content differs it's a collision.
+    if f.stat().st_size != arm_match.stat().st_size:
+        collisions.append((f, arm_match))
 
-for f in collisions:
-    new_name = f"{prefix}{f.name}"
-    shutil.copy(f, assets / new_name)
-    pat = re.compile(rf'(<mesh\b[^/>]*\bfile=")({re.escape(f.name)})(")')
+for eef_file, arm_file in collisions:
+    new_name = f"{prefix}{eef_file.name}"
+    shutil.copy(eef_file, assets / new_name)              # eef under prefixed name
+    shutil.copy(arm_file, assets / eef_file.name)         # arm under bare name (overwrites)
+    # IMPORTANT: scope the rewrite to mesh refs whose `name=` starts with
+    # the eef prefix. Otherwise a naive `file="<basename>"` regex also
+    # matches the ARM's mesh ref (which has the same `file=` value but a
+    # bare/unprefixed `name=`) and re-points it at the wrong file.
+    pat = re.compile(
+        rf'(<mesh\b[^/>]*\bname="{re.escape(prefix)}[^"]*"[^/>]*\bfile=")'
+        rf'({re.escape(eef_file.name)})(")'
+    )
     text, n = pat.subn(rf'\1{new_name}\3', text)
-    print(f"  {f.name}  ->  {new_name}   ({n} ref(s) updated)")
+    if n == 0:
+        # Some MJCFs put `file=` before `name=`; try the swapped order.
+        pat2 = re.compile(
+            rf'(<mesh\b[^/>]*\bfile=")({re.escape(eef_file.name)})("[^/>]*\bname="{re.escape(prefix)}[^"]*")'
+        )
+        text, n = pat2.subn(rf'\1{new_name}\3', text)
+    print(f"  {eef_file.name}  ->  {new_name}   "
+          f"(eef ref(s) updated: {n}; arm copy refreshed under bare name)")
 
 xml_path.write_text(text)
 print(f"Resolved {len(collisions)} collision(s)")
 PYEOF
 ```
 
-Reload in viewer to confirm the correct meshes render. If `Resolved 0
-collision(s)` prints, you're clean — no rewrite happened. Re-run the
-detection diff above to confirm the merged `assets/` is consistent.
+Reload in viewer (or recompile) to confirm. If `Resolved 0
+collision(s)` prints, you're clean — re-run both detection diffs
+above to confirm.
 
-**Prevention going forward.** Any time arm and end-effector both ship a
-mesh whose basename appears in both `assets/` dirs, plan the rename
-ahead of time (do step 1+2 *before* step 5 of the workflow).
+**Prevention going forward.** Any time arm and end-effector both ship
+a mesh with the same basename, plan the rename ahead of time (do
+step 1+2 *before* step 5 of the workflow). Direction B is especially
+sneaky because it surfaces only after the §4 mesh-source fix masks
+the gap.
 
 ---
 
-## 2. End-effector root body origin on the wrong face for wrist mounting
+## 2. End-effector mounts at the wrong pos / orientation on the wrist
 
-**Symptom.** End-effector visually mounts at the wrist but the palm
-body extends *into the arm* (i.e. the back of the palm is hidden inside
-link6). Fingers project from the wrist origin, palm geometry is behind
-them sticking into the arm.
+**Symptom.** End-effector mounts at the wrist but with one or more of:
+- Palm body extends *into the arm* (back of palm hidden inside the
+  wrist link).
+- Palm/fingers point in the wrong direction (sideways, up, or back
+  toward the arm) instead of "out of the flange".
+- One or more finger bodies clip into the wrist link.
 
-**Cause.** Some standalone MJCFs (notably mujoco_menagerie's wonik_allegro
-left_hand.xml / right_hand.xml) place the palm body's *origin* at the
-**front face** of the palm — where the fingers attach — with the palm
-geometry extending in palm-local -Z direction. With identity quat at
-the wrist flange (the script's default after attach), this puts the
-back of the palm at wrist Z = -palm_depth = ~5–10 cm into the arm.
+**Cause.** Three independent things the attach script gets wrong:
 
-**Detection.** Run the bundled helper on the standalone eef MJCF — it
-compiles the model, finds the worldbody root, and computes the
-negative-Z extent of every collision geom in body-local frame:
+1. **Origin on the wrong face.** Some standalone MJCFs (notably
+   mujoco_menagerie's wonik_allegro left/right_hand.xml) place the
+   palm body's *origin* at the **front face** of the palm — where the
+   fingers attach — with palm geometry extending in palm-local -Z. So
+   the back of the palm sits ~5–10 cm into the arm.
+2. **Standalone palm quat composed with site quat.** The script
+   preserves the standalone palm body's quat, which then composes with
+   the arm's `attachment_site` quat. The standalone quat was authored
+   for the eef sitting in worldbody, not on this arm's flange; the
+   composition rarely produces the right orientation.
+3. **`pos` is in wrist body frame, not site frame.** The arm's
+   `attachment_site` may have a non-trivial quat (e.g. SO101's site is
+   +90° around Y). A naive `pos="0 0 H"` on the palm body translates
+   along *wrist body Z*, which can be world-up or sideways — NOT
+   along the flange-out direction.
+
+**Detection.** Run the bundled helper. Pass BOTH the arm and the eef
+so it can read the site's quat + pos and express the mount in the
+correct (wrist body) frame:
 
 ```bash
-./.venv/bin/python .claude/skills/attach-end-effector/scripts/compute_wrist_offset.py \
-    robots/<eef>/<eef>.xml
+./.venv/bin/python .claude/skills/attach-end-effector/scripts/compute_wrist_mount.py \
+    robots/<eef>/<eef>.xml --arm robots/<arm>/<arm>.xml
 ```
 
-If `H (collision-flush, recommended) > 0`, this gotcha applies. If
-`H = 0`, the root origin already sits at the back of the palm — no
-offset needed. (Visual: opening the combined `scene.xml` in
-`mujoco.viewer` and seeing eef body clip through the wrist is the same
-diagnosis, but the helper gives you the exact H to apply.)
+It computes:
+- `Q_align` — rotation that maps the eef's auto-detected fingers-out
+  axis (centroid of root descendants) to site +Z.
+- `Q_palm = Q_site * Q_twist * Q_align` — the palm body's quat in the
+  wrist body frame.
+- `H` — negative-Z extent of the root body's COLLISION geoms in site
+  frame (post-rotation), so the back of the palm sits flush with the
+  flange.
+- `pos = site_pos + R(Q_site) @ (0, 0, H)` — translation along site
+  +Z, expressed in wrist body coords.
 
-The helper reports two values:
+The helper reports two H values:
 - `H (collision-flush)` — uses only collision geoms (`contype |
   conaffinity != 0`). Recommended: contact volumes sit flush with the
   wrist flange.
@@ -130,18 +216,47 @@ The helper reports two values:
   (cables, mounting plate). Don't use this — it pushes the eef forward,
   leaving a contact gap at the wrist.
 
-**Fix.** Add `pos="0 0 H"` to the prefixed root body in the combined
-XML, using the collision-flush H from the helper. The quat stays
-identity unless there's a separate orientation issue.
+**Fix.** Override the prefixed root body's pos + quat with the
+helper's output. Both must be applied together — using one without
+the other reproduces the original problem.
 
 ```bash
-# Before
-<body name="<prefix>_palm" childclass="..." quat="0 0.707107 0 0.707107">
-# After (use the H printed by compute_wrist_offset.py)
-<body name="<prefix>_palm" childclass="..." pos="0 0 <H>" quat="1 0 0 0">
+# Before (script's default)
+<body name="<prefix>_palm" childclass="..." quat="<auto-quat>">
+# After (use the pos and quat printed by compute_wrist_mount.py)
+<body name="<prefix>_palm" childclass="..." pos="<X> <Y> <Z>" quat="<W> <X> <Y> <Z>">
 ```
 
-**Prevention.** Run `compute_wrist_offset.py` in the preflight step
+**Twist limitation.** The auto-detected quat aligns the palm's
+fingers-out axis with site +Z, but the rotation *around* that axis
+(palm-up vs palm-down vs thumb-side) is convention-dependent and
+under-determined by descendant geometry alone. If the palm visually
+mounts with fingers projecting toward the arm or with the palm facing
+the wrong way, re-run with `--twist {90,180,270}` until it looks
+right. The helper recomputes pos and quat for each twist value.
+
+**Multi-geom limitation (visible gap at the mount face).** When the
+root body has multiple collision geoms with different -Z extents
+(e.g. PincOpen has both an `interface_arm100` mounting plate AND a
+`base` body whose mesh origin sits forward of the body origin), the
+helper auto-picks the DEEPEST geom — guaranteeing no geom penetrates
+the arm. The shallower geom (the actual mount face) then sits
+forward of the flange, leaving a visible gap.
+
+The helper output flags this with `MULTI-GEOM NOTE` and prints a
+per-geom `H` column. Pick the H of the geom that's the real mounting
+interface and pass it via `--h-override`:
+
+```bash
+./.venv/bin/python .claude/skills/attach-end-effector/scripts/compute_wrist_mount.py \
+    robots/PincOpen/gripper.xml --arm robots/piper_arm/piper_arm.xml \
+    --h-override 0.0066    # interface_arm100 plate, not base body
+```
+
+The deeper geom will then visually overlap the wrist link (typically
+hidden inside its mesh), but the actual mount face sits flush.
+
+**Prevention.** Run `compute_wrist_mount.py` in the preflight step
 *before* attaching, not after seeing clipping in the viewer.
 
 ---

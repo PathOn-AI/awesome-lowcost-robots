@@ -17,9 +17,13 @@ The script gets the kinematic attach right but does **not** handle:
    when both ship a same-named STL/OBJ (e.g. `base_link.stl`), the
    second copy is silently dropped and mesh refs resolve to the wrong
    geometry.
-2. End-effectors whose root body's origin is on the wrong face of the
-   palm for wrist mounting (some hands place the origin at the front
-   face, so the body extends *into* the arm under identity quat).
+2. End-effector mounts at the wrong pos / orientation: the standalone
+   palm quat composes with the arm's `attachment_site` quat in
+   unpredictable ways, the palm's origin may sit on the front face of
+   the palm (Allegro), and the script's natural `pos` is in wrist body
+   frame (not site frame), so a naive offset translates the palm in
+   the wrong direction when the site has a non-identity quat. Use
+   `compute_wrist_mount.py` (preflight) to get the right pos+quat.
 3. Empty-prefix failures: entity-name collisions (`repeated name 'X'`)
    AND bare nested `<default>` blocks in the eef source (`empty class
    name`). Internal namespacing only protects against the first.
@@ -54,20 +58,33 @@ checklist in `references/workflow.md`.
    internal namespacing (e.g. barrett's `bh_*`) only protects against
    the first. See `references/gotchas.md` §3 for the two `grep` checks
    that justify empty if you really want it.
-3. Run the script (see Commands).
-4. **Verify end-effector meshes were actually copied.** The script
+3. **Preflight: compute the mount pos + quat** with the bundled
+   helper. Pass BOTH the arm and the eef so it reads the
+   `attachment_site` quat and outputs values in wrist body frame:
+   ```bash
+   ./.venv/bin/python .claude/skills/attach-end-effector/scripts/compute_wrist_mount.py \
+       robots/<eef>/<eef>.xml --arm robots/<arm>/<arm>.xml
+   ```
+   It prints a single `pos="X Y Z" quat="W X Y Z"` line to apply on
+   the prefixed root body after the script runs (step 7 below). If
+   the palm visually mounts rotated, re-run with `--twist 90/180/270`
+   and pick the one that looks right. See `references/gotchas.md` §2.
+4. Run the script (see Commands).
+5. **Verify end-effector meshes were actually copied.** The script
    hard-codes `<eef>/assets/` as the source; if the end-effector's
    `<compiler meshdir>` is anything else (e.g. `meshes`, unset, etc.),
    zero eef meshes get copied and the script emits no warning.
    See `references/gotchas.md` §4 for the parse-meshdir + `cp` recipe.
-5. **Check for mesh-filename collisions in the merged `assets/`.** See
+6. **Check for mesh-filename collisions in the merged `assets/`.** See
    `references/gotchas.md` §1 — same-named STL/OBJ files between arm
    and eef silently overwrite each other.
-6. **Check the end-effector mounts flush at the flange.** Open the
-   combined `scene.xml` in MuJoCo viewer. If the eef body extends
-   *into* the arm, set `pos="0 0 H"` on the prefixed root body so its
-   back face sits at the wrist; see `references/gotchas.md` §2.
-7. Verify all combined actuators map to the intended joints (sliders
+7. **Apply the helper's pos + quat** to the prefixed root body in the
+   combined XML. Both must be applied together — using one without the
+   other reproduces the original problem; see `references/gotchas.md` §2.
+8. Open the combined `scene.xml` in `mujoco.viewer` and verify the
+   palm mounts flush at the flange with no finger/wrist clipping. If
+   the orientation is off, dial in `--twist` (step 3) and re-apply.
+9. Verify all combined actuators map to the intended joints (sliders
    in viewer should move the right things on both arm and eef).
 
 ## Commands

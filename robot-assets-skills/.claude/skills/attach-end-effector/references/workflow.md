@@ -23,16 +23,19 @@ a known way to go wrong.
    `<default>` blocks); see `gotchas.md` §3 for the two `grep` checks
    that decide whether empty is actually safe. When in doubt, use a
    non-empty prefix — the cost is zero.
-5. **Predict the pos offset.** Run the bundled helper to compute H
-   systematically (no eyeballing):
+5. **Predict the mount pos + quat.** Run the bundled helper to compute
+   the full mounting transform (no eyeballing). Pass BOTH the arm and
+   the eef so the helper can read the arm's `attachment_site` quat and
+   express the mount in wrist body frame:
    ```bash
-   ./.venv/bin/python .claude/skills/attach-end-effector/scripts/compute_wrist_offset.py \
-       robots/<eef>/<eef>.xml
+   ./.venv/bin/python .claude/skills/attach-end-effector/scripts/compute_wrist_mount.py \
+       robots/<eef>/<eef>.xml --arm robots/<arm>/<arm>.xml
    ```
-   If it prints `H (collision-flush) > 0`, plan a `pos="0 0 H" quat="1 0 0 0"`
-   override on the prefixed root body in the combined XML (Fix 3 below).
-   If H = 0, no offset needed. See `gotchas.md` §2 for why
-   collision-flush is the right convention.
+   It prints a single `pos="..." quat="..."` line to apply on the
+   prefixed root body in the combined XML (Fix 3 below). If the palm
+   visually mounts rotated (palm facing wrong way, fingers poking the
+   arm), re-run with `--twist 90 / 180 / 270` until it looks right.
+   See `gotchas.md` §2 for why we use the collision-flush convention.
 6. **Read the eef's `<compiler meshdir>`.** The attach script assumes
    `<eef>/assets/`. If the gripper's compiler element points elsewhere
    (e.g. `meshes`, unset, etc.), the script silently copies zero
@@ -101,37 +104,52 @@ echo "combined: $(ls robots/<arm>_<eef>/assets/ | wc -l)"
 # combined should equal arm + eef (minus same-name overwrites — see Fix 2)
 ```
 
-### Fix 2: mesh-filename collisions (always check)
+### Fix 2: mesh-filename collisions (always check, BOTH directions)
+
+Same-named meshes between arm and eef can land wrong in two ways:
+the script copies arm first and the eef's same-name version is
+silently dropped (Direction A), OR the arm's `meshdir` isn't
+`assets/`, the script's hardcoded copy step finds zero arm meshes,
+the eef's meshes land first, and Fix 1's `cp -n` then can't
+overwrite them with the arm's correct version (Direction B). Either
+way: a same-name file ends up under one body's reference but with
+the other body's content.
 
 ```bash
-# List any size mismatches between source eef assets and merged combined assets
+# List size mismatches between BOTH source dirs and the merged combined assets
 python3 -c "
 from pathlib import Path
-eef = Path('$EEF_MESHDIR')  # resolved by Fix 1 above
+arm = Path('$ARM_MESHDIR')        # resolved analogously to Fix 1
+eef = Path('$EEF_MESHDIR')        # resolved by Fix 1 above
 combined = Path('robots/<arm>_<eef>/assets')
-for f in eef.iterdir():
-    cf = combined / f.name
-    if cf.exists() and cf.stat().st_size != f.stat().st_size:
-        print('COLLISION:', f.name, f.stat().st_size, '->', cf.stat().st_size)
+for src, label in [(arm, 'ARM'), (eef, 'EEF')]:
+    if not src.exists(): continue
+    for f in src.iterdir():
+        cf = combined / f.name
+        if cf.exists() and cf.stat().st_size != f.stat().st_size:
+            print(f'COLLISION ({label}):', f.name, f.stat().st_size, '->', cf.stat().st_size)
 "
 ```
 
-If any `COLLISION:` lines print, run `gotchas.md` §1 fix — it
-batches all collisions in one pass.
+If any `COLLISION:` lines print (in either direction), run
+`gotchas.md` §1 fix — it batches all collisions and handles both
+directions in one pass.
 
-### Fix 3: pos offset (when end-effector clips into the arm)
+### Fix 3: pos + quat mount (when the script's output mounts wrong)
 
-Get H from `compute_wrist_offset.py` (the preflight step ran it
-already; re-run if you skipped). Then edit the combined MJCF in-place
-to add the pos offset on the prefixed root body:
+Get the recommended `pos="..." quat="..."` line from
+`compute_wrist_mount.py` (the preflight step ran it already; re-run if
+you skipped, or to dial in `--twist`). Then edit the combined MJCF
+in-place to override the prefixed root body's pose:
 
 ```bash
-sed -i 's|<body name="<prefix>_<root>" childclass="<prefix>_<class>" quat="<auto-quat>">|<body name="<prefix>_<root>" childclass="<prefix>_<class>" pos="0 0 <H>" quat="1 0 0 0">|' \
+sed -i 's|<body name="<prefix>_<root>" childclass="<prefix>_<class>" quat="<auto-quat>">|<body name="<prefix>_<root>" childclass="<prefix>_<class>" pos="<X> <Y> <Z>" quat="<W> <X> <Y> <Z>">|' \
     robots/<arm>_<eef>/<arm>_<eef>.xml
 ```
 
-See `gotchas.md` §2 for why we use the collision-flush H, not the
-visual-union H.
+See `gotchas.md` §2 for why we use the collision-flush convention,
+and why pos/quat must be expressed in the wrist body frame (not the
+site frame).
 
 ## Verify
 
