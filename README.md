@@ -8,6 +8,8 @@ Open-source tools and resources by [Pathon Robotics](https://www.pathon.ai) — 
 
 **Website**: https://www.pathon.ai/opensource
 
+**MakerWorld**: https://makerworld.com/en/@user_2131935394 — printable models from Pathon Robotics
+
 Step-by-step tutorials at https://www.pathon.ai/blog
 
 ## Projects
