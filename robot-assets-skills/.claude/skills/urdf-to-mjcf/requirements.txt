@@ -1,10 +1,15 @@
 # urdf-to-mjcf — runtime requirements
 #
-# MuJoCo's URDF loader is built into the `mujoco` package; the
-# `mjcf-urdf-simple-converter` shim wraps it for the script's CLI.
-# `lxml` is for the post-tune XML rewrites (adding equality blocks,
-# rescaling inertias, injecting actuators) without losing comments.
+# Prefer K-Scale Labs `urdf2mjcf` for URDF -> MJCF conversion.  The
+# bundled wrapper can fall back to MuJoCo's built-in URDF loader, but
+# that raw output usually needs more manual post-tuning.
 
 mujoco>=3.5
-mjcf-urdf-simple-converter
 lxml>=4.9
+urdf2mjcf>=0.2.39
+xacro>=2.0
+
+# Runtime deps used by the vendored urdf2mjcf copy in pathonai_diy_pipeline.
+colorlogging
+pydantic
+trimesh

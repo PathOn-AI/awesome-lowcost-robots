@@ -1,11 +1,28 @@
 # `urdf-to-mjcf` Gotchas
 
-The five post-tune fix categories that turn a raw conversion into a
+The post-tune fix categories that turn a raw conversion into a
 usable MJCF. Read this before declaring a conversion "done".
 
 A raw output that *compiles* and *opens in the viewer* can still be
 unusable if any of these are wrong (fingers won't move, joints fly
 off, dynamics blow up at first contact).
+
+## Simulation levels
+
+Use these labels when discussing converted models:
+
+- **Level 0: loadable** — MuJoCo compiles the XML and opens it.
+- **Level 1: controllable-ish** — joints have starter actuators and
+  can be moved in the viewer.
+- **Level 1.5: geometry-informed** — URDF/CAD provides credible
+  frames, mesh placement, collision geometry, mass, and inertia.
+- **Level 2: calibrated** — dynamics and control parameters come from
+  real hardware/vendor data and match measured motion.
+
+URDF-to-MJCF conversion can automate Level 0 and help reach Level 1.
+CAD metadata can help reach Level 1.5. Level 2 needs external data:
+motor torque-speed curves, gear ratio, controller gains, friction,
+backlash, armature, encoder/controller limits, and contact properties.
 
 ---
 
@@ -108,6 +125,10 @@ step).
 
 **Cause.** MuJoCo's URDF loader doesn't generate `<actuator>` blocks.
 URDF has no concept of an actuator/motor as a first-class element.
+K-Scale `urdf2mjcf` can generate generic `<motor>` actuators when
+metadata is missing, but those are torque controls. In the viewer,
+dragging a torque slider can look delayed because it applies force
+rather than commanding a target joint angle.
 
 **Fix.** Add a `<position>` (or `<motor>` / `<velocity>`) actuator per
 controlled joint:
@@ -131,8 +152,29 @@ add actuators only for the **primary** joints, not the mimic'd ones.
 Barrett has 4 actuators driving 8 joints; allegro has 16
 (no mimics).
 
-`kp` and `kv` are starting points — tune in the viewer until the joint
-tracks the commanded angle smoothly without oscillation.
+`kp`, force range, damping, armature, and frictionloss are starting
+points unless traced to hardware data. Tune in the viewer until the
+joint tracks the commanded angle smoothly without oscillation, but
+label the result as an estimate unless it matches measured hardware.
+
+The bundled wrapper converts generated `<motor>` elements to
+`<position>` elements by default. It also exposes:
+
+```text
+--control-profile generic|so101-sts3215
+--position-kp <float>
+--position-force <float>
+--joint-damping <float>
+--joint-armature <float>
+--joint-frictionloss <float>
+```
+
+Use `--keep-motors` only when torque control is intentional.
+
+For SO101/STS3215-style servos, `--control-profile so101-sts3215`
+uses sprint-log starter values: `kp=17.8`, force range `±3.35`,
+damping `0.60`, armature `0.028`, and frictionloss `0.052`. These are
+still template estimates, not calibrated measurements.
 
 ---
 
@@ -165,7 +207,58 @@ palm and first-link bodies. If found, exclude.
 
 ---
 
-## 5. Compiler / option defaults that matter
+## 5. K-Scale `urdf2mjcf` schema and base-body quirks
+
+The K-Scale converter preserves the kinematic tree well, but sprint
+logs showed several deterministic fixes that must happen before
+viewer validation:
+
+- `scale` can be emitted on `<geom>` elements. MuJoCo requires mesh
+  scale on `<asset><mesh>`.
+- fixed arms can get `<freejoint name="floating_base"/>`, causing the
+  robot to fall.
+- some `<inertial>` elements can be missing required `pos`.
+- mesh paths can retain `file://`, `package://`, or machine-local
+  absolute paths.
+- missing metadata yields generic motor defaults.
+- URDFs can contain `<link name="world">`; converted MJCF cannot keep
+  a user body named `world` because MuJoCo reserves that body name.
+- when output XML is written outside the URDF folder, generated
+  `meshes/converted_*.obj` assets may be left beside the URDF while
+  MJCF references are relative to the output XML.
+
+The bundled wrapper handles the first three plus `file://` stripping
+and fixed-base freejoint removal. It also renames converted user body
+`world` to `world_link` and copies missing referenced meshes from the
+URDF folder to the output folder. Still inspect the output because
+`package://` paths and project-specific actuator metadata require
+local judgment.
+
+## 6. Mesh format and mesh-origin mismatches
+
+**Symptom.** The MJCF body hierarchy and geom offsets match the URDF,
+but all links appear bunched near the origin or badly shifted in the
+viewer.
+
+**Cause.** The mesh files do not match the URDF's visual origins.
+The MyCobot 280 Pi conversion hit this: URDF was authored for DAE
+meshes, but MuJoCo does not load DAE. Converting DAE to STL/OBJ changed
+internal mesh origins/coordinate metadata, so the converted MJCF was
+kinematically correct but visually wrong.
+
+**Rule.** Treat URDF + mesh files as one matched asset set. Do not
+freely swap DAE/STL/OBJ assets unless you verify internal origins.
+
+**Debug.** Compare:
+
+```text
+world -> body pos/quat -> geom pos/quat -> mesh internal origin
+```
+
+If body and geom transforms match the URDF, fix the mesh asset set or
+retune geom offsets instead of rewriting the kinematic tree.
+
+## 7. Compiler / option defaults that matter
 
 The converter doesn't set these but they're load-bearing for stable
 dexterous-hand sim:
@@ -181,4 +274,3 @@ dexterous-hand sim:
   stiff actuator gains (kp=10+) typical in dex hands.
 
 Add these to the converted MJCF's `<compiler>` and `<option>` elements.
-

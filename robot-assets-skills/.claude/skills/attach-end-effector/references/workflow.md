@@ -17,7 +17,7 @@ a known way to go wrong.
    print('eef nq=', m.nq, 'nu=', m.nu)
    "
    ```
-3. Confirm MuJoCo Python is ≥ 3.5 (see `gotchas.md` §5).
+3. Confirm MuJoCo Python is ≥ 3.5 (see `gotchas.md` §6).
 4. **Predict the prefix.** Default to a non-empty prefix. Empty prefix
    has two failure modes (entity-name collisions AND bare nested
    `<default>` blocks); see `gotchas.md` §3 for the two `grep` checks
@@ -151,6 +151,12 @@ See `gotchas.md` §2 for why we use the collision-flush convention,
 and why pos/quat must be expressed in the wrist body frame (not the
 site frame).
 
+### Fix 4: tendon hands
+
+If the end-effector source has `<tendon>` actuators or `<sensor>`
+entries, run the checks in `gotchas.md` §5. The attach script may
+compile while dropping most tendon actuators.
+
 ## Verify
 
 1. **Compile + count check:**
@@ -158,13 +164,15 @@ site frame).
    ./.venv/bin/python -c "
    import mujoco
    m = mujoco.MjModel.from_xml_path('robots/<arm>_<eef>/<arm>_<eef>.xml')
-   print('combined nq=', m.nq, 'nu=', m.nu, 'nbody=', m.nbody)
+   print('combined nq=', m.nq, 'nu=', m.nu, 'nbody=', m.nbody, 'ntendon=', m.ntendon, 'neq=', m.neq)
    for i in range(m.nu):
        print(' ', i, m.actuator(i).name)
    "
    ```
    Expected: `nq = arm.nq + eef.nq`, `nu = arm.nu + eef.nu`, all
-   actuator names prefixed correctly.
+   actuator names prefixed correctly. For tendon hands, also compare
+   `ntendon`, tendon actuator names, and sensor names against the eef
+   source.
 
 2. **Visual check** (must — collisions and pos offsets are visual bugs
    that compile cleanly):

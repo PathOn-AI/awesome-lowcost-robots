@@ -369,7 +369,81 @@ combined `assets/` dir is the canary.
 
 ---
 
-## 5. MuJoCo version
+## 5. Tendon-driven hands can lose actuators
+
+**Symptom: most hand sliders are missing.** The combined model
+compiles, but `nu` is too low. For example, `so101_arm` has 5
+actuators and `aero_hand_right` has 7, so the combined model should
+have 12. The raw attach output had only 6: the arm's five actuators
+plus one thumb joint actuator. The six tendon actuators were missing.
+
+**Cause.**
+
+1. **Tendon actuator preservation is incomplete.** `MjSpec.attach`
+   can preserve the eef bodies, joints, equality constraints, and some
+   actuator defaults while dropping or partially serializing tendon
+   structures, tendon position actuators, and sensors. Aero exposes
+   most of its controls as `<position tendon="...">`, not direct joint
+   actuators.
+2. **Prefix rewrites must cover tendon route attributes.** When
+   restoring a prefixed `<tendon>` block manually, `name`, `site`,
+   `geom`, `joint`, and `tendon` are not enough. Tendon route
+   `<geom ... sidesite="..."/>` references must be prefixed too.
+
+**Detection.**
+
+Compare source and combined model counts:
+
+```bash
+./.venv/bin/python -c "
+import mujoco
+for p in [
+  'robots/<arm>/<arm>.xml',
+  'robots/<eef>/<eef>.xml',
+  'robots/<arm>_<eef>/<arm>_<eef>.xml',
+]:
+    m = mujoco.MjModel.from_xml_path(p)
+    print(p, 'nq=', m.nq, 'nu=', m.nu, 'ntendon=', m.ntendon,
+          'neq=', m.neq, 'nsensor=', m.nsensor)
+    print('  actuators:', [m.actuator(i).name for i in range(m.nu)])
+"
+```
+
+If `combined.nu != arm.nu + eef.nu`, inspect the source eef:
+
+```bash
+grep -n '<tendon\|<actuator\|<sensor\|tendon=' robots/<eef>/<eef>.xml
+```
+
+**Fix: restore tendon blocks and tendon actuators.**
+
+For Aero-style hands, copy the eef's `<tendon>` and `<sensor>` blocks
+into the combined XML with the same prefix used during attach, and add
+back the missing tendon actuators. Prefix these attributes inside the
+copied blocks: `name`, `class`, `site`, `geom`, `sidesite`, `joint`,
+and `tendon`.
+
+The corresponding compile check after repair should show the expected
+actuator and tendon counts. For `so101_arm + aero_hand_right`:
+
+```text
+combined nq=21 nu=12 nbody=29 ntendon=20 neq=5
+actuators= shoulder_pan, shoulder_lift, elbow_flex, wrist_flex,
+           wrist_roll, aero_right_index_A_tendon, ...
+```
+
+**Prevention going forward.** Treat any eef with `<tendon>` or
+`<position tendon="...">` as a special case. Before declaring the
+model done:
+
+- compare `nu`, `ntendon`, `neq`, and `nsensor` against the source
+  arm/eef counts;
+- inspect viewer sliders for missing tendon controls;
+- verify every copied tendon route has prefixed `sidesite` references.
+
+---
+
+## 6. MuJoCo version
 
 `MjSpec.attach()` requires MuJoCo Python ≥ 3.5. Versions 3.4.x have a
 name-decoding bug that surfaces as garbled body names in the combined

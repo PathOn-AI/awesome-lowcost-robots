@@ -1,6 +1,6 @@
 ---
 name: attach-end-effector
-description: Mount an end-effector (parallel-jaw gripper, dexterous hand, suction tool, etc.) on a robot arm by attaching its MJCF to the arm's `attachment_site` via MuJoCo's MjSpec API. Use when combining an arm MJCF and an end-effector MJCF into a single combined model. Handles known gotchas the underlying script doesn't: same-named mesh files silently overwriting each other, end-effectors whose root body origin sits on the wrong face for wrist mounting, empty-prefix failures (entity-name collisions and bare nested `<default>` blocks), and the script silently skipping eef meshes when the eef's `<compiler meshdir>` isn't `assets/`.
+description: Mount an end-effector (parallel-jaw gripper, dexterous hand, suction tool, etc.) on a robot arm by attaching its MJCF to the arm's `attachment_site` via MuJoCo's MjSpec API. Use when combining an arm MJCF and an end-effector MJCF into a single combined model. Handles known gotchas the underlying script doesn't: mesh collisions, wrong mount poses, empty-prefix failures, skipped meshes, and tendon-driven hands.
 ---
 
 # attach-end-effector
@@ -30,6 +30,9 @@ The script gets the kinematic attach right but does **not** handle:
 4. End-effectors whose `<compiler meshdir>` isn't `assets/` — the
    script hard-codes the eef mesh source, silently copies zero
    meshes, and emits no warning. Compile fails on missing mesh files.
+5. Tendon-driven hands — `MjSpec.attach` can drop most tendon
+   actuators/sensors when the eef exposes controls as
+   `<position tendon="...">`.
 
 These are addressed in `references/gotchas.md` and the post-script
 checklist in `references/workflow.md`.
@@ -84,8 +87,13 @@ checklist in `references/workflow.md`.
 8. Open the combined `scene.xml` in `mujoco.viewer` and verify the
    palm mounts flush at the flange with no finger/wrist clipping. If
    the orientation is off, dial in `--twist` (step 3) and re-apply.
-9. Verify all combined actuators map to the intended joints (sliders
-   in viewer should move the right things on both arm and eef).
+9. Verify all combined actuators/tendons/sensors survived. Expected
+   `nu` is usually `arm.nu + eef.nu`; tendon-driven hands can also
+   require `ntendon` and `<sensor>` checks. See `references/gotchas.md`
+   §5 for Aero-style tendon hands.
+10. Verify all combined actuators map to the intended joints or
+   tendons (sliders in viewer should move the right things on both arm
+   and eef).
 
 ## Commands
 
